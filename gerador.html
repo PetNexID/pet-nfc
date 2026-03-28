@@ -4,17 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Gerador Pet NFC</title>
+<title>PetNex ID • Gerador NFC</title>
 
 <style>
 
-/* 🔥 FUNDO MODERNO */
+/* 🔥 FUNDO PREMIUM */
 body {
   margin: 0;
   height: 100vh;
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Arial, sans-serif;
 
-  background: radial-gradient(circle at top, #1f4037, #0f2027 70%);
+  background: radial-gradient(circle at top, #1c3b34, #0b1c22 70%);
 
   display: flex;
   align-items: center;
@@ -22,7 +22,18 @@ body {
   overflow: hidden;
 }
 
-/* 🔥 LOGO COMO ELEMENTO DE FUNDO SUAVE */
+/* 🌫️ LUZ AMBIENTE */
+body::after {
+  content: "";
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(0,255,180,0.08), transparent 70%);
+  top: -100px;
+  right: -100px;
+}
+
+/* 🧩 MARCA D'ÁGUA */
 body::before {
   content: "";
   position: absolute;
@@ -30,41 +41,44 @@ body::before {
   height: 500px;
   background: url('logo.png') no-repeat center;
   background-size: contain;
-  opacity: 0.05;
-  filter: blur(2px);
+  opacity: 0.04;
+  filter: blur(3px);
 }
 
-/* 🔥 CARD GLASS */
+/* 💎 CARD */
 .card {
   position: relative;
   z-index: 2;
 
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(15px);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
 
   padding: 30px;
-  border-radius: 20px;
+  border-radius: 22px;
 
-  max-width: 400px;
+  max-width: 380px;
   width: 90%;
 
   text-align: center;
 
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.12);
 
   color: white;
 }
 
-/* 🔥 LOGO NO TOPO */
+/* 🔥 LOGO COM GLOW */
 .logo-top {
   width: 180px;
   margin-bottom: 15px;
+
+  filter: drop-shadow(0 0 12px rgba(0,255,180,0.25));
 }
 
-/* TITULO */
+/* TÍTULO */
 h2 {
   margin-bottom: 20px;
+  font-weight: 500;
 }
 
 /* INPUTS */
@@ -73,11 +87,11 @@ input {
   padding: 14px;
   margin: 10px 0;
 
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
   outline: none;
 
-  font-size: 16px;
+  font-size: 15px;
 }
 
 /* BOTÕES */
@@ -86,42 +100,50 @@ button {
   padding: 14px;
   margin-top: 10px;
 
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 15px;
+  font-weight: 600;
 
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   cursor: pointer;
 
-  transition: 0.2s;
+  transition: 0.25s;
 }
 
 button:hover {
-  transform: scale(1.04);
+  transform: scale(1.05);
+  filter: brightness(1.1);
 }
 
-/* CORES PREMIUM */
+/* 🎨 PALETA COESA */
 .gerar {
   background: linear-gradient(45deg, #00c6ff, #0072ff);
   color: white;
 }
 
 .copiar {
-  background: linear-gradient(45deg, #00b09b, #96c93d);
-  color: white;
+  background: linear-gradient(45deg, #00b09b, #00ffb3);
+  color: #003333;
 }
 
 .testar {
-  background: linear-gradient(45deg, #ff7e5f, #feb47b);
-  color: white;
+  background: linear-gradient(45deg, #ff7e5f, #ffb88c);
+  color: #5a1a00;
 }
 
 /* LINK */
 #link {
   margin-top: 15px;
   word-break: break-all;
-  font-size: 13px;
-  color: #ddd;
+  font-size: 12px;
+  color: #ccc;
+}
+
+/* RODAPÉ (branding leve) */
+.footer {
+  margin-top: 15px;
+  font-size: 11px;
+  opacity: 0.6;
 }
 
 </style>
@@ -144,6 +166,8 @@ button:hover {
 <button class="testar" onclick="testar()">Testar Link</button>
 
 <p id="link"></p>
+
+<div class="footer">PetNex ID • Tecnologia para pets</div>
 
 </div>
 
