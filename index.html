@@ -4,63 +4,128 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Pet NFC</title>
+<title>PetNex ID</title>
 
 <style>
+
+/* 🔥 FUNDO PREMIUM */
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  height: 100vh;
+  font-family: 'Segoe UI', Arial, sans-serif;
+
+  background: radial-gradient(circle at top, #1c3b34, #0b1c22 70%);
+
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  overflow: hidden;
 }
 
+/* 🌫️ LUZ AMBIENTE */
+body::after {
+  content: "";
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(0,255,180,0.08), transparent 70%);
+  top: -100px;
+  right: -100px;
+}
+
+/* 🧩 MARCA D'ÁGUA */
+body::before {
+  content: "";
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: url('Logo.png') no-repeat center;
+  background-size: contain;
+  opacity: 0.04;
+  filter: blur(3px);
+}
+
+/* 💎 CARD */
 .card {
-  background: white;
-  padding: 25px;
-  border-radius: 20px;
-  text-align: center;
+  position: relative;
+  z-index: 2;
+
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+
+  padding: 30px;
+  border-radius: 22px;
+
+  max-width: 380px;
   width: 90%;
-  max-width: 350px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
 
-h1 {
-  margin-bottom: 10px;
-}
+  text-align: center;
 
-p {
-  color: #555;
-  margin-bottom: 25px;
-}
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.12);
 
-button {
-  width: 100%;
-  padding: 18px;
-  font-size: 18px;
-  border: none;
-  border-radius: 12px;
-  background: #25D366;
   color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
 }
 
-button:hover {
-  transform: scale(1.03);
-}
-
+/* 🔥 STATUS */
 .status {
-  background: #ff4d4d;
+  background: linear-gradient(45deg, #ff4d4d, #ff0000);
   color: white;
   padding: 8px;
   border-radius: 10px;
   margin-bottom: 15px;
   font-weight: bold;
+  font-size: 13px;
 }
+
+/* 🔥 LOGO */
+.logo {
+  width: 160px;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 12px rgba(0,255,180,0.3));
+}
+
+/* TITULO */
+h1 {
+  margin: 10px 0;
+  font-weight: 500;
+}
+
+/* TEXTO */
+p {
+  color: #ccc;
+  margin-bottom: 25px;
+  font-size: 14px;
+}
+
+/* BOTÃO PRINCIPAL */
+button {
+  width: 100%;
+  padding: 18px;
+  font-size: 16px;
+  border: none;
+  border-radius: 14px;
+  font-weight: bold;
+  cursor: pointer;
+
+  background: linear-gradient(45deg, #00ffb3, #00c6ff);
+  color: #003333;
+
+  transition: 0.25s;
+}
+
+button:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+/* RODAPÉ */
+.footer {
+  margin-top: 15px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
 </style>
 
 </head>
@@ -71,13 +136,17 @@ button:hover {
 
 <div class="status">🚨 PET PERDIDO</div>
 
+<img src="Logo.png" class="logo">
+
 <h1 id="nome">🐶 Pet</h1>
 
-<p>Toque no botão abaixo para avisar o dono</p>
+<p>Toque abaixo para avisar o dono e enviar sua localização</p>
 
 <button onclick="enviar()">
 📍 Enviar localização via WhatsApp
 </button>
+
+<div class="footer">PetNex ID • Tecnologia para pets</div>
 
 </div>
 
@@ -87,7 +156,7 @@ function enviar() {
 
   const params = new URLSearchParams(window.location.search);
   const telefone = params.get("tel") || "5584999383155";
-  const nome = params.get("nome") || "pet";
+  const nome = params.get("nome") || "Pet";
 
   document.getElementById("nome").innerText = "🐶 " + nome;
 
@@ -116,6 +185,13 @@ function enviar() {
   });
 
 }
+
+/* 🔥 ATUALIZA NOME AUTOMATICAMENTE */
+window.onload = () => {
+  const params = new URLSearchParams(window.location.search);
+  const nome = params.get("nome") || "Pet";
+  document.getElementById("nome").innerText = "🐶 " + nome;
+};
 
 </script>
 
