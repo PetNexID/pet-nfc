@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Pet NFC</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.card {
+  background: white;
+  padding: 25px;
+  border-radius: 20px;
+  text-align: center;
+  width: 90%;
+  max-width: 350px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+h1 {
+  margin-bottom: 10px;
+}
+
+p {
+  color: #555;
+  margin-bottom: 25px;
+}
+
+button {
+  width: 100%;
+  padding: 18px;
+  font-size: 18px;
+  border: none;
+  border-radius: 12px;
+  background: #25D366;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: scale(1.03);
+}
+
+.status {
+  background: #ff4d4d;
+  color: white;
+  padding: 8px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<div class="status">🚨 PET PERDIDO</div>
+
+<h1 id="nome">🐶 Pet</h1>
+
+<p>Toque no botão abaixo para avisar o dono</p>
+
+<button onclick="enviar()">
+📍 Enviar localização via WhatsApp
+</button>
+
+</div>
+
+<script>
+
+function enviar() {
+
+  const params = new URLSearchParams(window.location.search);
+  const telefone = params.get("tel") || "5584999999999";
+  const nome = params.get("nome") || "pet";
+
+  document.getElementById("nome").innerText = "🐶 " + nome;
+
+  if (!navigator.geolocation) {
+    alert("Seu dispositivo não suporta localização");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition((pos) => {
+
+    let lat = pos.coords.latitude;
+    let lng = pos.coords.longitude;
+
+    let maps = "https://www.google.com/maps?q=" + lat + "," + lng;
+
+    let mensagem = encodeURIComponent(
+      "🐶 Encontrei " + nome + "!\n📍 Localização: " + maps
+    );
+
+    let url = "https://wa.me/" + telefone + "?text=" + mensagem;
+
+    window.location.href = url;
+
+  }, () => {
+    alert("Ative a localização para continuar");
+  });
+
+}
+
+</script>
+
+</body>
+</html>
