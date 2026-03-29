@@ -8,115 +8,85 @@
 
 <style>
 
-/* 🔥 FUNDO PREMIUM */
+/* FUNDO PREMIUM */
 body {
   margin: 0;
   height: 100vh;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: 'Segoe UI', Arial;
 
   background: radial-gradient(circle at top, #1c3b34, #0b1c22 70%);
 
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
 }
 
-/* 🌫️ LUZ AMBIENTE */
-body::after {
-  content: "";
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(0,255,180,0.08), transparent 70%);
-  top: -100px;
-  right: -100px;
-}
-
-/* 🧩 MARCA D'ÁGUA */
-body::before {
-  content: "";
-  position: absolute;
-  width: 500px;
-  height: 500px;
-  background: url('Logo.png') no-repeat center;
-  background-size: contain;
-  opacity: 0.04;
-  filter: blur(3px);
-}
-
-/* 💎 CARD */
+/* CARD */
 .card {
-  position: relative;
-  z-index: 2;
-
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255,255,255,0.06);
   backdrop-filter: blur(18px);
-
-  padding: 30px;
   border-radius: 22px;
-
-  max-width: 380px;
+  padding: 25px;
   width: 90%;
-
+  max-width: 360px;
   text-align: center;
-
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-  border: 1px solid rgba(255,255,255,0.12);
-
   color: white;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
 }
 
-/* 🔥 STATUS */
+/* LOGO */
+.logo {
+  width: 150px;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 10px rgba(0,255,180,0.3));
+}
+
+/* STATUS */
 .status {
   background: linear-gradient(45deg, #ff4d4d, #ff0000);
-  color: white;
-  padding: 8px;
-  border-radius: 10px;
-  margin-bottom: 15px;
-  font-weight: bold;
-  font-size: 13px;
-}
-
-/* 🔥 LOGO */
-.logo {
-  width: 160px;
+  padding: 6px;
+  border-radius: 8px;
+  font-size: 12px;
   margin-bottom: 10px;
-  filter: drop-shadow(0 0 12px rgba(0,255,180,0.3));
 }
 
 /* TITULO */
 h1 {
   margin: 10px 0;
-  font-weight: 500;
 }
 
 /* TEXTO */
 p {
   color: #ccc;
-  margin-bottom: 25px;
   font-size: 14px;
 }
 
-/* BOTÃO PRINCIPAL */
+/* BOTÕES */
 button {
   width: 100%;
-  padding: 18px;
-  font-size: 16px;
+  padding: 15px;
+  margin-top: 10px;
   border: none;
   border-radius: 14px;
   font-weight: bold;
   cursor: pointer;
-
-  background: linear-gradient(45deg, #00ffb3, #00c6ff);
-  color: #003333;
-
-  transition: 0.25s;
+  font-size: 15px;
+  transition: 0.2s;
 }
 
 button:hover {
   transform: scale(1.05);
-  filter: brightness(1.1);
+}
+
+/* CORES */
+.whats {
+  background: linear-gradient(45deg, #00ffb3, #00c6ff);
+  color: #003333;
+}
+
+.ligar {
+  background: linear-gradient(45deg, #ff7e5f, #ffb88c);
+  color: #4a1a00;
 }
 
 /* RODAPÉ */
@@ -134,16 +104,20 @@ button:hover {
 
 <div class="card">
 
-<div class="status">🚨🚨🚨 PET PERDIDO 🚨🚨🚨</div>
+<img src="Logo.png" class="logo">
 
-<img src="Logo.png" class="Logo">
+<div class="status">🚨 PET PERDIDO</div>
 
-<h1 id="nome">🐶🐱 Pet </h1>
+<h1 id="nome">🐶 Pet</h1>
 
-<p>Toque abaixo para avisar o dono e enviar sua localização</p>
+<p id="tutor">Tutor: ---</p>
 
-<button onclick="enviar()">
-📍 Enviar localização via WhatsApp
+<button class="whats" onclick="enviar()">
+📍 Avisar dono via WhatsApp
+</button>
+
+<button class="ligar" onclick="ligar()">
+📞 Ligar para o dono
 </button>
 
 <div class="footer">PetNex ID • Tecnologia para pets</div>
@@ -152,13 +126,17 @@ button:hover {
 
 <script>
 
+const params = new URLSearchParams(window.location.search);
+
+const nome = params.get("nome") || "Pet";
+const telefone = params.get("tel") || "558499999999";
+const tutor = params.get("tutor") || "Não informado";
+
+document.getElementById("nome").innerText = "🐶 " + nome;
+document.getElementById("tutor").innerText = "Tutor: " + tutor;
+
+/* WHATS COM LOCALIZAÇÃO */
 function enviar() {
-
-  const params = new URLSearchParams(window.location.search);
-  const telefone = params.get("tel") || "5584999383155";
-  const nome = params.get("nome") || "Pet";
-
-  document.getElementById("nome").innerText = "🐶 🐱 " + nome;
 
   if (!navigator.geolocation) {
     alert("Seu dispositivo não suporta localização");
@@ -176,22 +154,17 @@ function enviar() {
       "🐶 Encontrei " + nome + "!\n📍 Localização: " + maps
     );
 
-    let url = "https://wa.me/" + telefone + "?text=" + mensagem;
-
-    window.location.href = url;
+    window.location.href = "https://wa.me/" + telefone + "?text=" + mensagem;
 
   }, () => {
-    alert("Ative a localização para continuar");
+    alert("Ative a localização");
   });
-
 }
 
-/* 🔥 ATUALIZA NOME AUTOMATICAMENTE */
-window.onload = () => {
-  const params = new URLSearchParams(window.location.search);
-  const nome = params.get("nome") || "Pet";
-  document.getElementById("nome").innerText = "🐶 " + nome;
-};
+/* BOTÃO LIGAR */
+function ligar() {
+  window.location.href = "tel:" + telefone;
+}
 
 </script>
 
