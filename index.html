@@ -13,9 +13,7 @@ body {
   margin: 0;
   height: 100vh;
   font-family: 'Segoe UI', Arial;
-
   background: radial-gradient(circle at top, #1c3b34, #0b1c22 70%);
-
   display: flex;
   align-items: center;
   justify-content: center;
@@ -55,10 +53,17 @@ h1 {
   margin: 10px 0;
 }
 
-/* TEXTO */
-p {
-  color: #ccc;
+/* TUTOR DESTACADO */
+.tutor-box {
+  background: rgba(255,255,255,0.08);
+  padding: 10px;
+  border-radius: 12px;
+  margin-bottom: 15px;
   font-size: 14px;
+}
+
+.tutor-box strong {
+  color: #00ffb3;
 }
 
 /* BOTÕES */
@@ -110,7 +115,10 @@ button:hover {
 
 <h1 id="nome">🐶 Pet</h1>
 
-<p id="tutor">Tutor: ---</p>
+<!-- 🔥 TUTOR DESTACADO -->
+<div class="tutor-box">
+Tutor: <strong id="tutor">---</strong>
+</div>
 
 <button class="whats" onclick="enviar()">
 📍 Avisar dono via WhatsApp
@@ -132,8 +140,9 @@ const nome = params.get("nome") || "Pet";
 const telefone = params.get("tel") || "558499999999";
 const tutor = params.get("tutor") || "Não informado";
 
+/* INSERE DADOS */
 document.getElementById("nome").innerText = "🐶 " + nome;
-document.getElementById("tutor").innerText = "Tutor: " + tutor;
+document.getElementById("tutor").innerText = tutor;
 
 /* WHATS COM LOCALIZAÇÃO */
 function enviar() {
@@ -161,7 +170,7 @@ function enviar() {
   });
 }
 
-/* BOTÃO LIGAR */
+/* LIGAR */
 function ligar() {
   window.location.href = "tel:" + telefone;
 }
