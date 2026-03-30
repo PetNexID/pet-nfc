@@ -7,151 +7,178 @@
 <title>PetNex ID</title>
 
 <style>
-
 body {
-  margin: 0;
-  height: 100vh;
-  font-family: 'Segoe UI', Arial;
+  margin:0;
+  height:100vh;
+  font-family:'Segoe UI';
   background: radial-gradient(circle at top, #1c3b34, #0b1c22 70%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
 }
 
 .card {
   background: rgba(255,255,255,0.06);
   backdrop-filter: blur(20px);
-  padding: 25px;
-  border-radius: 22px;
-  width: 90%;
-  max-width: 360px;
-  text-align: center;
-  color: white;
+  padding:25px;
+  border-radius:22px;
+  width:90%;
+  max-width:360px;
+  text-align:center;
 }
 
 input {
-  width: 90%;
-  padding: 14px;
-  margin: 8px 0;
-  border-radius: 12px;
-  border: none;
+  width:90%;
+  padding:14px;
+  margin:8px 0;
+  border-radius:12px;
+  border:none;
 }
 
 button {
-  width: 100%;
-  padding: 14px;
-  margin-top: 10px;
-  border-radius: 14px;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.ativar {
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  margin-top:10px;
+  font-weight:bold;
+  cursor:pointer;
   background: linear-gradient(45deg,#00ffb3,#00c6ff);
 }
-
-.erro {
-  color: #ff4d4d;
-}
-
 </style>
 </head>
 
 <body>
 
 <div class="card">
-
 <h2 id="titulo">🔄 Verificando TAG...</h2>
-
 <div id="conteudo"></div>
-
 </div>
 
 <script>
 
 const API = "https://script.google.com/macros/s/AKfycbww_8i3tmo0RTu_q5FCvQl1Q5O5-NDt4yAQ9pigX9Hsb-WCzO4x6qJFCoh3JwB5F3I8/exec";
 
-const params = new URLSearchParams(window.location.search);
-const id = params.get("id")?.trim().toUpperCase();
+const id = new URLSearchParams(window.location.search).get("id");
 
-function limpar(txt) {
-  return txt.replace(/\s/g, "").toUpperCase();
+function limpar(txt){
+  return txt.replace(/\s/g,"").toUpperCase();
 }
 
-async function iniciar() {
+// 🔥 FETCH COM TIMEOUT (ANTI TRAVAMENTO)
+function fetchTimeout(url, timeout = 5000) {
+  return Promise.race([
+    fetch(url),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Timeout")), timeout)
+    )
+  ]);
+}
 
-  if (!id) {
-    document.getElementById("titulo").innerText = "Erro";
-    document.getElementById("conteudo").innerHTML = "TAG inválida";
-    return;
+async function iniciar(){
+
+  try {
+
+    if(!id){
+      throw "TAG inválida";
+    }
+
+    console.log("Consultando:", id);
+
+    let res = await fetchTimeout(API + "?id=" + id, 5000);
+
+    let raw = await res.text();
+    let status = limpar(raw);
+
+    console.log("STATUS:", status);
+
+    // ❌ NÃO EXISTE
+    if(status.includes("NAO_EXISTE")){
+      mostrarErro("TAG não cadastrada");
+      return;
+    }
+
+    // 🐶 JÁ ATIVA
+    if(status.includes("USADO")){
+      window.location.href = "/?id=" + id;
+      return;
+    }
+
+    // 🚀 LIVRE
+    if(status.includes("LIVRE")){
+      mostrarFormulario();
+      return;
+    }
+
+    throw "Resposta inválida da API";
+
+  } catch(e) {
+
+    console.error("ERRO:", e);
+
+    mostrarErro("Erro ao conectar com servidor");
+
   }
+}
 
-  let res = await fetch(API + "?id=" + id);
-  let status = limpar(await res.text());
+function mostrarErro(msg){
+  document.getElementById("titulo").innerText = "Erro";
+  document.getElementById("conteudo").innerHTML = `<p>${msg}</p>`;
+}
 
-  console.log("STATUS:", status);
+function mostrarFormulario(){
 
-  // ❌ NÃO EXISTE
-  if (status.includes("NAO_EXISTE")) {
-    document.getElementById("titulo").innerText = "❌ TAG inválida";
-    document.getElementById("conteudo").innerHTML =
-      "<p class='erro'>Esta TAG não existe no sistema</p>";
-    return;
-  }
+  document.getElementById("titulo").innerText = "Ativar TAG";
 
-  // 🐶 JÁ ATIVA → VAI DIRETO
-  if (status.includes("USADO")) {
+  document.getElementById("conteudo").innerHTML = `
+    <input id="nome" placeholder="Nome do pet">
+    <input id="tel" placeholder="WhatsApp">
+    <input id="tutor" placeholder="Tutor">
+    <button onclick="ativar()">Ativar</button>
+  `;
+}
+
+async function ativar(){
+
+  try {
+
+    let nome = document.getElementById("nome").value;
+    let tel = document.getElementById("tel").value;
+    let tutor = document.getElementById("tutor").value;
+
+    if(!nome || !tel){
+      alert("Preencha os dados");
+      return;
+    }
+
+    document.getElementById("titulo").innerText = "🔄 Ativando...";
+
+    let res = await fetchTimeout(
+      API +
+      "?id=" + id +
+      "&nome=" + encodeURIComponent(nome) +
+      "&tel=" + tel +
+      "&tutor=" + encodeURIComponent(tutor),
+      5000
+    );
+
+    let resultado = limpar(await res.text());
+
+    console.log("ATIVACAO:", resultado);
+
+    if(!resultado.includes("ATIVADO")){
+      throw "Falha na ativação";
+    }
+
     window.location.href = "/?id=" + id;
-    return;
+
+  } catch(e){
+
+    console.error(e);
+    mostrarErro("Erro ao ativar");
+
   }
-
-  // 🚀 LIVRE → MOSTRA FORM PREMIUM
-  if (status.includes("LIVRE")) {
-
-    document.getElementById("titulo").innerText = "Ativar TAG";
-
-    document.getElementById("conteudo").innerHTML = `
-      <input id="nome" placeholder="Nome do pet">
-      <input id="tel" placeholder="WhatsApp (5584...)">
-      <input id="tutor" placeholder="Nome do tutor">
-
-      <button class="ativar" onclick="ativar()">Ativar agora</button>
-    `;
-  }
-}
-
-async function ativar() {
-
-  let nome = document.getElementById("nome").value;
-  let tel = document.getElementById("tel").value;
-  let tutor = document.getElementById("tutor").value;
-
-  if (!nome || !tel) {
-    alert("Preencha os dados");
-    return;
-  }
-
-  document.getElementById("titulo").innerText = "🔄 Ativando...";
-
-  let ativacao = await fetch(
-    API +
-    "?id=" + id +
-    "&nome=" + encodeURIComponent(nome) +
-    "&tel=" + tel +
-    "&tutor=" + encodeURIComponent(tutor)
-  );
-
-  let resultado = limpar(await ativacao.text());
-
-  if (!resultado.includes("ATIVADO")) {
-    document.getElementById("titulo").innerText = "Erro";
-    document.getElementById("conteudo").innerHTML = "Falha ao ativar";
-    return;
-  }
-
-  // 🔥 REDIRECIONA
-  window.location.href = "/?id=" + id;
 }
 
 iniciar();
