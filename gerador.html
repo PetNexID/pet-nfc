@@ -164,7 +164,7 @@ async function gerar() {
     }
 
     // ❌ TAG NÃO EXISTE
-    if (status !== "LIVRE" && status !== "OK") {
+    if (status !== "LIVRE" && status !== "USADO") {
       statusUI.innerText = "❌ TAG NÃO EXISTE";
       return;
     }
