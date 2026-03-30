@@ -86,7 +86,7 @@ async function init() {
 
   // 🔥 TAG JÁ ATIVA
   if (raw.startsWith("{")) {
-    setTitulo("TAG já ativada");
+    setTitulo("🚨 TAG já ativada 🚨");
     setStatus("Redirecionando...");
     redirect();
     return;
@@ -95,7 +95,7 @@ async function init() {
   const status = raw.toUpperCase();
 
   if (status === "LIVRE") {
-    setTitulo("🔒 Ativação Premium");
+    setTitulo("🔒 Ativação Premium 🔒");
     setStatus("Preencha os dados para ativar");
     document.getElementById("form").style.display = "block";
     return;
@@ -116,7 +116,7 @@ async function ativar() {
   const tutor = document.getElementById("tutor").value.trim();
 
   if (!nome || !tel) {
-    setStatus("Preencha nome e WhatsApp");
+    setStatus("Preencha nome e WhatsApp (5584...)");
     return;
   }
 
