@@ -24,7 +24,7 @@ body {
 <body>
 
 <div>
-<h2>🔄 Ativando TAG...</h2>
+<h2 id="titulo">🔄 Ativando TAG...</h2>
 <p id="status">Aguarde...</p>
 </div>
 
@@ -33,7 +33,7 @@ body {
 const API = "https://script.google.com/macros/s/AKfycbww_8i3tmo0RTu_q5FCvQl1Q5O5-NDt4yAQ9pigX9Hsb-WCzO4x6qJFCoh3JwB5F3I8/exec";
 
 const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
+const id = (params.get("id") || "").toUpperCase().trim();
 
 async function ativarAutomatico() {
 
@@ -42,49 +42,92 @@ async function ativarAutomatico() {
     return;
   }
 
-  // 🔎 valida
-  let res = await fetch(API + "?id=" + id);
-  let status = (await res.text()).replace(/\s/g,"").toUpperCase();
+  try {
 
-  if (status === "NAO_EXISTE") {
-    document.getElementById("status").innerText = "TAG não existe";
-    return;
+    // 🔎 valida status
+    let res = await fetch(API + "?id=" + id);
+    let raw = await res.text();
+    let status = raw.trim().toUpperCase();
+
+    console.log("STATUS:", status);
+
+    // ❌ tag não existe
+    if (status.includes("NAO_EXISTE")) {
+      document.getElementById("titulo").innerText = "Erro";
+      document.getElementById("status").innerText = "❌ TAG não existe";
+      return;
+    }
+
+    // 🔥 TAG JÁ ATIVA
+    if (status.includes("USADO")) {
+
+      document.getElementById("titulo").innerText = "TAG já ativada";
+      document.getElementById("status").innerText =
+        "🐾 Esta TAG já está vinculada. Redirecionando...";
+
+      setTimeout(() => {
+        window.location.href = "/?id=" + id;
+      }, 2000);
+
+      return;
+    }
+
+    // 🟢 TAG LIVRE → ativação
+    if (status.includes("LIVRE")) {
+
+      document.getElementById("titulo").innerText = "Ativação necessária";
+      document.getElementById("status").innerText = "Preencha os dados...";
+
+      let nome = prompt("Nome do pet:");
+      let tel = prompt("WhatsApp:");
+      let tutor = prompt("Tutor:");
+
+      if (!nome || !tel) {
+        document.getElementById("status").innerText = "⚠️ Dados incompletos";
+        return;
+      }
+
+      document.getElementById("status").innerText = "Ativando...";
+
+      // 🚀 ativa
+      let ativacao = await fetch(
+        API +
+        "?id=" + id +
+        "&nome=" + encodeURIComponent(nome.trim()) +
+        "&tel=" + encodeURIComponent(tel.trim()) +
+        "&tutor=" + encodeURIComponent((tutor || "").trim())
+      );
+
+      let rawAtivacao = await ativacao.text();
+      let resultado = rawAtivacao.trim().toUpperCase();
+
+      console.log("ATIVACAO:", resultado);
+
+      if (!resultado.includes("ATIVADO")) {
+        document.getElementById("status").innerText = "❌ Erro ao ativar";
+        return;
+      }
+
+      document.getElementById("status").innerText =
+        "✅ Ativado com sucesso! Redirecionando...";
+
+      setTimeout(() => {
+        window.location.href = "/?id=" + id;
+      }, 1500);
+
+      return;
+    }
+
+    // fallback
+    document.getElementById("status").innerText = "Erro inesperado";
+
+  } catch (err) {
+
+    console.error(err);
+    document.getElementById("status").innerText = "❌ Erro de conexão";
+
   }
 
-  if (status === "USADO") {
-    // 🔥 já ativa → vai direto pro pet
-    window.location.href = "/?id=" + id;
-    return;
-  }
-
-  // 🔥 pega dados automaticamente
-  let nome = prompt("Nome do pet:");
-  let tel = prompt("WhatsApp:");
-  let tutor = prompt("Tutor:");
-
-  if (!nome || !tel) {
-    document.getElementById("status").innerText = "Dados incompletos";
-    return;
-  }
-
-  // 🚀 ativa
-  let ativacao = await fetch(
-    API +
-    "?id=" + id +
-    "&nome=" + encodeURIComponent(nome) +
-    "&tel=" + tel +
-    "&tutor=" + encodeURIComponent(tutor)
-  );
-
-  let resultado = (await ativacao.text()).replace(/\s/g,"");
-
-  if (resultado !== "ATIVADO") {
-    document.getElementById("status").innerText = "Erro ao ativar";
-    return;
-  }
-
-  // 🔥 redireciona automático
-  window.location.href = "/?id=" + id;
 }
 
 ativarAutomatico();
