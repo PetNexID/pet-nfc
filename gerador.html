@@ -144,7 +144,11 @@ async function gerar() {
 
   document.getElementById("status").innerText = "🔍 Validando TAG...";
 
-  let status = await validarTag(tag);
+  let baseApi = "https://script.google.com/macros/s/AKfycbzvyvR_mfKgoT4eOntTp8YqAz2iuNF4NCBMX1F_3j5UAFjLwD0GZNc6Pz6Nia2N7hGJ/exec";
+
+  // 🔹 valida primeiro
+  let res = await fetch(baseApi + "?id=" + tag);
+  let status = await res.text();
 
   if (status == "NAO_EXISTE") {
     document.getElementById("status").innerText = "❌ TAG inválida";
@@ -156,8 +160,26 @@ async function gerar() {
     return;
   }
 
-  // ✅ TAG OK
-  document.getElementById("status").innerText = "✅ TAG válida";
+  // 🔥 ATIVAÇÃO REAL (GRAVA NO BANCO)
+  document.getElementById("status").innerText = "💾 Ativando TAG...";
+
+  let ativacao = await fetch(
+    baseApi +
+    "?id=" + tag +
+    "&nome=" + encodeURIComponent(nome) +
+    "&tel=" + tel +
+    "&tutor=" + encodeURIComponent(tutor)
+  );
+
+  let resultado = await ativacao.text();
+
+  if (resultado != "ATIVADO") {
+    document.getElementById("status").innerText = "Erro ao ativar";
+    return;
+  }
+
+  // ✅ SUCESSO
+  document.getElementById("status").innerText = "✅ TAG ativada com sucesso";
 
   let base = "https://pet-nfc-pi.vercel.app/";
 
@@ -168,7 +190,6 @@ async function gerar() {
 
   document.getElementById("link").innerText = linkGerado;
 }
-
 function copiar() {
   if (!linkGerado) return alert("Gere primeiro");
   navigator.clipboard.writeText(linkGerado);
