@@ -32,8 +32,8 @@ body {
 
 const API = "COLE_AQUI_SUA_URL_NOVA";
 
-// 🔥 sempre usa caminho relativo correto
-const REDIRECT_URL = "index.html";
+// 🔥 URL base garantida (resolve 100% dos erros do Vercel)
+const BASE_URL = window.location.origin;
 
 const params = new URLSearchParams(window.location.search);
 const id = (params.get("id") || "").toUpperCase().trim();
@@ -53,10 +53,9 @@ async function ativarAutomatico() {
 
     console.log("RAW:", raw);
 
-    // 🔥 LIMPEZA FORTE
     raw = raw.trim();
 
-    // 🔥 SE FOR JSON (TAG JÁ ATIVA)
+    // 🔥 JSON → já ativo
     if (raw.startsWith("{")) {
 
       setTitulo("TAG já ativada");
@@ -68,14 +67,14 @@ async function ativarAutomatico() {
 
     const status = raw.toUpperCase();
 
-    // ❌ TAG NÃO EXISTE
+    // ❌ não existe
     if (status === "NAO_EXISTE") {
       setTitulo("Erro");
       setStatus("❌ TAG não existe");
       return;
     }
 
-    // 🔥 TAG JÁ USADA
+    // 🔥 já usado
     if (status === "USADO") {
 
       setTitulo("TAG já ativada");
@@ -85,7 +84,7 @@ async function ativarAutomatico() {
       return;
     }
 
-    // 🟢 LIVRE → ATIVAÇÃO
+    // 🟢 LIVRE
     if (status === "LIVRE") {
 
       setTitulo("Ativação necessária");
@@ -111,7 +110,6 @@ async function ativarAutomatico() {
 
       console.log("RESULTADO:", resultado);
 
-      // 🔥 validação robusta
       if (!resultado.includes("ATIVADO")) {
         setStatus("❌ Erro ao ativar");
         return;
@@ -123,7 +121,6 @@ async function ativarAutomatico() {
       return;
     }
 
-    // 🔥 fallback real (mostra retorno)
     setStatus("Erro inesperado: " + raw);
 
   } catch (err) {
@@ -133,10 +130,10 @@ async function ativarAutomatico() {
 
 }
 
-// 🔁 REDIRECIONAMENTO SEGURO (resolve bug do Vercel)
+// 🔥 REDIRECIONAMENTO ABSOLUTO (NUNCA QUEBRA)
 function redirect(delay = 2000) {
   setTimeout(() => {
-    window.location.href = `${REDIRECT_URL}?id=${id}`;
+    window.location.href = `${BASE_URL}/index.html?id=${id}`;
   }, delay);
 }
 
