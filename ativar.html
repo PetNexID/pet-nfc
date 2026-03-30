@@ -133,7 +133,7 @@ async function ativarAutomatico() {
 // 🔥 REDIRECIONAMENTO ABSOLUTO (NUNCA QUEBRA)
 function redirect(delay = 2000) {
   setTimeout(() => {
-    window.location.href = `${BASE_URL}/index.html?id=${id}`;
+    window.location.href = `${window.location.origin}/?id=${id}`;
   }, delay);
 }
 
