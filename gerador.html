@@ -33,7 +33,6 @@ body {
 .Logo {
   width: 160px;
   margin-bottom: 10px;
-  filter: drop-shadow(0 0 12px rgba(0,255,180,0.4));
 }
 
 input {
@@ -42,52 +41,25 @@ input {
   margin: 10px 0;
   border-radius: 12px;
   border: none;
-  font-size: 15px;
 }
 
 button {
   width: 90%;
   padding: 14px;
   margin-top: 10px;
-  border: none;
   border-radius: 14px;
+  border: none;
   font-weight: bold;
   cursor: pointer;
-  transition: 0.2s;
 }
 
-button:hover {
-  transform: scale(1.04);
-}
-
-.gerar { background: linear-gradient(45deg,#00c6ff,#0072ff); color:white; }
+.gerar { background: linear-gradient(45deg,#00c6ff,#0072ff); }
 .copiar { background: linear-gradient(45deg,#00b09b,#00ffb3); }
 .testar { background: linear-gradient(45deg,#ff7e5f,#ffb88c); }
 
-#status {
-  margin-top: 10px;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-#hora {
-  margin-top: 5px;
-  font-size: 12px;
-  color: #aaa;
-}
-
-#link {
-  margin-top: 15px;
-  font-size: 12px;
-  color: #ccc;
-  user-select: none;
-}
-
-.footer {
-  margin-top: 15px;
-  font-size: 11px;
-  opacity: 0.6;
-}
+#status { margin-top: 10px; }
+#hora { margin-top: 5px; font-size: 12px; color: #aaa; }
+#link { margin-top: 15px; font-size: 12px; color: #ccc; }
 
 </style>
 </head>
@@ -95,8 +67,6 @@ button:hover {
 <body>
 
 <div class="card">
-
-<img src="Logo.png" class="Logo">
 
 <h2>🐶 Gerador NFC 🐶</h2>
 
@@ -113,115 +83,91 @@ button:hover {
 <p id="hora"></p>
 <p id="link"></p>
 
-<div class="footer">PetNex ID • Tecnologia para pets</div>
-
 </div>
 
 <script>
 
 let linkGerado = "";
 
-// 🔒 Exibição truncada
 function truncarLink(url) {
-  if (url.length <= 40) return url;
   return url.substring(0, 25) + "..." + url.substring(url.length - 10);
-}
-
-// 🕒 Data/hora
-function formatarDataHora() {
-  return new Date().toLocaleString('pt-BR');
 }
 
 async function gerar() {
 
   const statusUI = document.getElementById("status");
 
-  try {
+  let tag = document.getElementById("tag").value.trim().toUpperCase();
+  let nome = document.getElementById("nome").value.trim();
+  let tel = document.getElementById("tel").value.trim();
+  let tutor = document.getElementById("tutor").value.trim();
 
-    let tag = document.getElementById("tag").value.trim().toUpperCase();
-    let nome = document.getElementById("nome").value.trim();
-    let tel = document.getElementById("tel").value.trim();
-    let tutor = document.getElementById("tutor").value.trim();
-
-    if (!tag || !nome || !tel) {
-      alert("Preencha todos os campos");
-      return;
-    }
-
-    statusUI.innerText = "🔍 Verificando TAG...";
-
-    const API = "https://script.google.com/macros/s/AKfycbww_8i3tmo0RTu_q5FCvQl1Q5O5-NDt4yAQ9pigX9Hsb-WCzO4x6qJFCoh3JwB5F3I8/exec";
-
-    // 🔎 validação
-    let res = await fetch(API + "?id=" + encodeURIComponent(tag));
-    let status = (await res.text()).trim().toUpperCase();
-
-    console.log("STATUS:", status);
-
-    if (status === "NAO_EXISTE") {
-      statusUI.innerText = "❌ TAG NÃO EXISTE";
-      return;
-    }
-
-    if (status === "USADO") {
-      statusUI.innerText = "🚫 TAG USADA";
-      return;
-    }
-
-    if (status !== "LIVRE") {
-      statusUI.innerText = "❌ ERRO NA VALIDAÇÃO";
-      return;
-    }
-
-    statusUI.innerText = "💾 Ativando TAG...";
-
-    let dataHora = formatarDataHora();
-
-    // 🔥 ativação
-    let ativacao = await fetch(
-      API +
-      "?id=" + tag +
-      "&nome=" + encodeURIComponent(nome) +
-      "&tel=" + tel +
-      "&tutor=" + encodeURIComponent(tutor) +
-      "&hora=" + encodeURIComponent(dataHora)
-    );
-
-    let resultado = (await ativacao.text()).trim().toUpperCase();
-
-    console.log("ATIVACAO:", resultado);
-
-    if (resultado !== "ATIVADO") {
-      statusUI.innerText = "❌ Falha ao ativar";
-      return;
-    }
-
-    // ✅ link final
-    linkGerado = "https://pet-nfc-pi.vercel.app/?id=" + tag;
-
-    statusUI.innerText = "✅ TAG ativada com sucesso";
-    document.getElementById("hora").innerText = "🕒 " + dataHora;
-    document.getElementById("link").innerText = truncarLink(linkGerado);
-
-  } catch (erro) {
-
-    console.error("ERRO:", erro);
-    statusUI.innerText = "❌ Erro de conexão";
+  if (!tag || !nome || !tel) {
+    alert("Preencha todos os campos");
+    return;
   }
+
+  const API = "https://script.google.com/macros/s/AKfycbww_8i3tmo0RTu_q5FCvQl1Q5O5-NDt4yAQ9pigX9Hsb-WCzO4x6qJFCoh3JwB5F3I8/exec";
+
+  statusUI.innerText = "🔍 Verificando TAG...";
+
+  let res = await fetch(API + "?id=" + tag);
+  let status = (await res.text()).trim().toUpperCase();
+
+  console.log("STATUS:", status);
+
+  // 🚫 USADA
+  if (status === "USADO") {
+    statusUI.innerText = "🚫 TAG USADA";
+    return;
+  }
+
+  // ❌ NÃO EXISTE
+  if (status === "NAO_EXISTE") {
+    statusUI.innerText = "❌ TAG NÃO EXISTE";
+    return;
+  }
+
+  // ✅ LIVRE (OU OK)
+  if (status !== "LIVRE" && status !== "OK") {
+    statusUI.innerText = "❌ ERRO NA VALIDAÇÃO";
+    return;
+  }
+
+  statusUI.innerText = "💾 Ativando TAG...";
+
+  let ativacao = await fetch(
+    API +
+    "?id=" + tag +
+    "&nome=" + encodeURIComponent(nome) +
+    "&tel=" + tel +
+    "&tutor=" + encodeURIComponent(tutor)
+  );
+
+  let resultado = (await ativacao.text()).trim().toUpperCase();
+
+  console.log("ATIVACAO:", resultado);
+
+  if (resultado !== "ATIVADO") {
+    statusUI.innerText = "❌ Falha ao ativar";
+    return;
+  }
+
+  linkGerado = "https://pet-nfc-pi.vercel.app/?id=" + tag;
+
+  statusUI.innerText = "✅ TAG ativada";
+  document.getElementById("link").innerText = truncarLink(linkGerado);
 }
 
-// 📋 copiar link completo
 function copiar() {
   if (!linkGerado) return alert("Gere primeiro");
-
   navigator.clipboard.writeText(linkGerado);
-  alert("✅ Link copiado completo!");
+  alert("Link copiado!");
 }
 
-// 🔍 testar
 function testar() {
   if (!linkGerado) return alert("Gere primeiro");
-  window.open(linkGerado, "_blank");
+  window.open(linkGerado);
 }
 
 </script>
