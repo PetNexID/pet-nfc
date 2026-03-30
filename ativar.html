@@ -38,32 +38,36 @@ const id = (params.get("id") || "").toUpperCase().trim();
 async function ativarAutomatico() {
 
   if (!id) {
-    document.getElementById("status").innerText = "ID inválido";
+    setStatus("ID inválido");
     return;
   }
 
   try {
 
-    // 🔎 valida status
+    // 🔎 consulta status
     let res = await fetch(API + "?id=" + id);
     let raw = await res.text();
-    let status = raw.trim().toUpperCase();
 
+    // 🔥 limpeza pesada (zero bug)
+    let status = raw
+      .replace(/\s/g, "")
+      .toUpperCase();
+
+    console.log("RAW:", raw);
     console.log("STATUS:", status);
 
-    // ❌ tag não existe
-    if (status.includes("NAO_EXISTE")) {
-      document.getElementById("titulo").innerText = "Erro";
-      document.getElementById("status").innerText = "❌ TAG não existe";
+    // ❌ não existe
+    if (status === "NAO_EXISTE") {
+      setTitulo("Erro");
+      setStatus("❌ TAG não existe");
       return;
     }
 
-    // 🔥 TAG JÁ ATIVA
-    if (status.includes("USADO")) {
+    // 🔥 já usada
+    if (status === "USADO") {
 
-      document.getElementById("titulo").innerText = "TAG já ativada";
-      document.getElementById("status").innerText =
-        "🐾 Esta TAG já está vinculada. Redirecionando...";
+      setTitulo("TAG já ativada");
+      setStatus("🐾 Esta TAG já está em uso. Abrindo...");
 
       setTimeout(() => {
         window.location.href = "/?id=" + id;
@@ -72,24 +76,23 @@ async function ativarAutomatico() {
       return;
     }
 
-    // 🟢 TAG LIVRE → ativação
-    if (status.includes("LIVRE")) {
+    // 🟢 livre → ativar
+    if (status === "LIVRE") {
 
-      document.getElementById("titulo").innerText = "Ativação necessária";
-      document.getElementById("status").innerText = "Preencha os dados...";
+      setTitulo("Ativação necessária");
+      setStatus("Preencha os dados...");
 
       let nome = prompt("Nome do pet:");
       let tel = prompt("WhatsApp:");
       let tutor = prompt("Tutor:");
 
       if (!nome || !tel) {
-        document.getElementById("status").innerText = "⚠️ Dados incompletos";
+        setStatus("⚠️ Dados incompletos");
         return;
       }
 
-      document.getElementById("status").innerText = "Ativando...";
+      setStatus("Ativando...");
 
-      // 🚀 ativa
       let ativacao = await fetch(
         API +
         "?id=" + id +
@@ -99,17 +102,19 @@ async function ativarAutomatico() {
       );
 
       let rawAtivacao = await ativacao.text();
-      let resultado = rawAtivacao.trim().toUpperCase();
+
+      let resultado = rawAtivacao
+        .replace(/\s/g, "")
+        .toUpperCase();
 
       console.log("ATIVACAO:", resultado);
 
-      if (!resultado.includes("ATIVADO")) {
-        document.getElementById("status").innerText = "❌ Erro ao ativar";
+      if (resultado !== "ATIVADO") {
+        setStatus("❌ Erro ao ativar");
         return;
       }
 
-      document.getElementById("status").innerText =
-        "✅ Ativado com sucesso! Redirecionando...";
+      setStatus("✅ Ativado com sucesso!");
 
       setTimeout(() => {
         window.location.href = "/?id=" + id;
@@ -118,16 +123,23 @@ async function ativarAutomatico() {
       return;
     }
 
-    // fallback
-    document.getElementById("status").innerText = "Erro inesperado";
+    // ⚠️ fallback (agora mostra o retorno real)
+    setStatus("Erro inesperado: " + status);
 
   } catch (err) {
-
     console.error(err);
-    document.getElementById("status").innerText = "❌ Erro de conexão";
-
+    setStatus("❌ Erro de conexão");
   }
 
+}
+
+// helpers
+function setStatus(msg) {
+  document.getElementById("status").innerText = msg;
+}
+
+function setTitulo(msg) {
+  document.getElementById("titulo").innerText = msg;
 }
 
 ativarAutomatico();
