@@ -9,18 +9,16 @@
 
 <style>
 
-/* 🔥 FUNDO PREMIUM */
 body {
   margin: 0;
   height: 100vh;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: 'Segoe UI', Arial;
   background: radial-gradient(circle at top, #1c3b34, #0b1c22 70%);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* 💎 CARD */
 .card {
   background: rgba(255,255,255,0.06);
   backdrop-filter: blur(18px);
@@ -33,42 +31,26 @@ body {
   box-shadow: 0 20px 60px rgba(0,0,0,0.6);
 }
 
-/* 🔥 LOGO */
 .logo {
   width: 150px;
   margin-bottom: 10px;
-  filter: drop-shadow(0 0 10px rgba(0,255,180,0.3));
 }
 
-/* 🚨 STATUS */
 .status {
-  background: linear-gradient(45deg, #ff4d4d, #ff0000);
+  background: red;
   padding: 6px;
   border-radius: 8px;
   font-size: 12px;
   margin-bottom: 10px;
 }
 
-/* 🐶 TITULO */
-h1 {
-  margin: 10px 0;
-  font-size: 26px;
-}
-
-/* 👤 TUTOR */
 .tutor-box {
   background: rgba(255,255,255,0.08);
   padding: 10px;
   border-radius: 12px;
   margin-bottom: 15px;
-  font-size: 14px;
 }
 
-.tutor-box strong {
-  color: #00ffb3;
-}
-
-/* 🔘 BOTÕES */
 button {
   width: 100%;
   padding: 15px;
@@ -77,38 +59,16 @@ button {
   border-radius: 14px;
   font-weight: bold;
   cursor: pointer;
-  font-size: 15px;
-  transition: 0.2s;
 }
 
-button:hover {
-  transform: scale(1.05);
-}
-
-/* 🎨 CORES */
 .whats {
   background: linear-gradient(45deg, #00ffb3, #00c6ff);
-  color: #003333;
 }
 
 .ligar {
   background: linear-gradient(45deg, #ff7e5f, #ffb88c);
-  color: #4a1a00;
 }
 
-/* 📍 LOADING */
-.loading {
-  font-size: 18px;
-  opacity: 0.8;
-}
-
-/* ⚠️ ERRO */
-.erro {
-  color: #ff6b6b;
-  font-size: 18px;
-}
-
-/* 🔻 RODAPÉ */
 .footer {
   margin-top: 15px;
   font-size: 11px;
@@ -127,117 +87,88 @@ button:hover {
 
 <div class="status">🚨 PET PERDIDO</div>
 
-<h1 id="nome" class="loading">Carregando...</h1>
+<h1 id="nome">Carregando...</h1>
 
 <div class="tutor-box">
 Tutor: <strong id="tutor">---</strong>
 </div>
 
-<button class="whats" onclick="enviar()">
-📍 Avisar dono via WhatsApp
-</button>
+<button class="whats" onclick="enviar()">📍 Avisar via WhatsApp</button>
+<button class="ligar" onclick="ligar()">📞 Ligar</button>
 
-<button class="ligar" onclick="ligar()">
-📞 Ligar para o dono
-</button>
-
-<div class="footer">PetNex ID • Tecnologia para pets</div>
+<div class="footer">PetNex ID</div>
 
 </div>
 
 <script>
 
 let telefone = "";
+let nomePet = "";
 
-/* 🔥 MOSTRAR ERRO */
-function mostrarErro(msg = "Erro ao carregar") {
-  document.getElementById("nome").innerText = msg;
-  document.getElementById("nome").className = "erro";
+// 🔥 SUA API
+const API = "https://script.google.com/macros/s/AKfycbww_8i3tmo0RTu_q5FCvQl1Q5O5-NDt4yAQ9pigX9Hsb-WCzO4x6qJFCoh3JwB5F3I8/exec";
+
+// 🔍 pega ID
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+
+// 🚫 sem id
+if (!id) {
+  erro("Link inválido");
+} else {
+  carregarDados(id);
 }
 
-/* 🚀 RENDER */
-function renderizar(dados) {
-  document.getElementById("nome").innerText = "🐶 " + (dados.nome || "Pet");
-  document.getElementById("nome").className = "";
-  document.getElementById("tutor").innerText = dados.tutor || "---";
-  telefone = dados.tel || "";
-}
-
-/* ⚡ CARREGAR DADOS */
-async function carregar() {
+// 🚀 buscar dados
+async function carregarDados(id) {
 
   try {
 
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
+    let res = await fetch(API + "?id=" + id);
+    let data = await res.json();
 
-    if (!id) {
-      mostrarErro("Link inválido");
+    if (!data || !data.tel) {
+      erro("Erro de dados");
       return;
     }
 
-    const api = "https://script.google.com/macros/s/AKfycbzXAwe57c7S4Tb-grelIKpu-EsDuylH8VVzvVTZ_EYkYScSxNnzrLVIKMU-1ltPLIdw/exec";
+    nomePet = data.nome;
+    telefone = data.tel;
 
-    let res = await fetch(api + "?id=" + id);
-
-    let texto = await res.text();
-
-    console.log("API:", texto);
-
-    if (!texto || texto === "INVALIDO") {
-      mostrarErro("Tag inválida");
-      return;
-    }
-
-    let dados;
-
-    try {
-      dados = JSON.parse(texto);
-    } catch {
-      mostrarErro("Erro de dados");
-      return;
-    }
-
-    renderizar(dados);
+    document.getElementById("nome").innerText = "🐶 " + data.nome;
+    document.getElementById("tutor").innerText = data.tutor;
 
   } catch (e) {
-    console.error(e);
-    mostrarErro();
+    erro("Erro ao carregar");
   }
 }
 
-carregar();
+// ❌ erro
+function erro(msg) {
+  document.getElementById("nome").innerText = msg;
+}
 
-/* 📍 WHATS */
+// 📍 Whats
 function enviar() {
 
-  if (!telefone) {
-    alert("Telefone não disponível");
-    return;
-  }
+  if (!telefone) return alert("Telefone não disponível");
 
-  navigator.geolocation.getCurrentPosition(pos => {
+  navigator.geolocation.getCurrentPosition((pos) => {
 
-    let maps = "https://www.google.com/maps?q=" +
-      pos.coords.latitude + "," + pos.coords.longitude;
+    let maps = "https://maps.google.com/?q=" + pos.coords.latitude + "," + pos.coords.longitude;
 
-    let msg = encodeURIComponent(
-      "🐶 Encontrei o pet!\n📍 Localização: " + maps
+    let mensagem = encodeURIComponent(
+      "🐶 Encontrei " + nomePet + "!\n📍 " + maps
     );
 
-    window.location.href = "https://wa.me/" + telefone + "?text=" + msg;
+    window.location.href = "https://wa.me/" + telefone + "?text=" + mensagem;
 
-  }, () => {
-    alert("Ative a localização");
   });
 }
 
-/* 📞 LIGAR */
+// 📞 ligar
 function ligar() {
-  if (!telefone) {
-    alert("Telefone não disponível");
-    return;
-  }
+  if (!telefone) return alert("Telefone não disponível");
   window.location.href = "tel:" + telefone;
 }
 
