@@ -28,7 +28,6 @@ body {
   max-width: 360px;
   text-align: center;
   color: white;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
 }
 
 .logo {
@@ -40,7 +39,6 @@ body {
   background: red;
   padding: 6px;
   border-radius: 8px;
-  font-size: 12px;
   margin-bottom: 10px;
 }
 
@@ -58,21 +56,14 @@ button {
   border: none;
   border-radius: 14px;
   font-weight: bold;
-  cursor: pointer;
 }
 
 .whats {
-  background: linear-gradient(45deg, #00ffb3, #00c6ff);
+  background: linear-gradient(45deg,#00ffb3,#00c6ff);
 }
 
 .ligar {
-  background: linear-gradient(45deg, #ff7e5f, #ffb88c);
-}
-
-.footer {
-  margin-top: 15px;
-  font-size: 11px;
-  opacity: 0.6;
+  background: linear-gradient(45deg,#ff7e5f,#ffb88c);
 }
 
 </style>
@@ -93,10 +84,8 @@ button {
 Tutor: <strong id="tutor">---</strong>
 </div>
 
-<button class="whats" onclick="enviar()">📍 Avisar via WhatsApp</button>
+<button class="whats" onclick="enviar()">📍 WhatsApp</button>
 <button class="ligar" onclick="ligar()">📞 Ligar</button>
-
-<div class="footer">PetNex ID</div>
 
 </div>
 
@@ -105,32 +94,28 @@ Tutor: <strong id="tutor">---</strong>
 let telefone = "";
 let nomePet = "";
 
-// 🔥 SUA API
 const API = "https://script.google.com/macros/s/AKfycbww_8i3tmo0RTu_q5FCvQl1Q5O5-NDt4yAQ9pigX9Hsb-WCzO4x6qJFCoh3JwB5F3I8/exec";
 
-// 🔍 pega ID
-const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
+const id = new URLSearchParams(window.location.search).get("id");
 
-// 🚫 sem id
 if (!id) {
-  erro("Link inválido");
+  document.getElementById("nome").innerText = "Link inválido";
 } else {
-  carregarDados(id);
+  carregar();
 }
 
-// 🚀 buscar dados
-async function carregarDados(id) {
+async function carregar() {
 
   try {
 
-    let res = await fetch(API + "?id=" + id);
-    let data = await res.json();
+    let res = await fetch(API + "?id=" + id + "&consulta=1");
+    let txt = await res.text();
 
-    if (!data || !data.tel) {
-      erro("Erro de dados");
-      return;
+    if (txt === "INVALIDO") {
+      throw new Error();
     }
+
+    let data = JSON.parse(txt);
 
     nomePet = data.nome;
     telefone = data.tel;
@@ -138,35 +123,27 @@ async function carregarDados(id) {
     document.getElementById("nome").innerText = "🐶 " + data.nome;
     document.getElementById("tutor").innerText = data.tutor;
 
-  } catch (e) {
-    erro("Erro ao carregar");
+  } catch {
+    document.getElementById("nome").innerText = "Erro ao carregar";
   }
 }
 
-// ❌ erro
-function erro(msg) {
-  document.getElementById("nome").innerText = msg;
-}
-
-// 📍 Whats
 function enviar() {
 
   if (!telefone) return alert("Telefone não disponível");
 
   navigator.geolocation.getCurrentPosition((pos) => {
 
-    let maps = "https://maps.google.com/?q=" + pos.coords.latitude + "," + pos.coords.longitude;
+    let maps = "https://maps.google.com/?q=" +
+      pos.coords.latitude + "," + pos.coords.longitude;
 
-    let mensagem = encodeURIComponent(
-      "🐶 Encontrei " + nomePet + "!\n📍 " + maps
-    );
+    let msg = encodeURIComponent("🐶 Encontrei " + nomePet + "!\n📍 " + maps);
 
-    window.location.href = "https://wa.me/" + telefone + "?text=" + mensagem;
+    window.location.href = "https://wa.me/" + telefone + "?text=" + msg;
 
   });
 }
 
-// 📞 ligar
 function ligar() {
   if (!telefone) return alert("Telefone não disponível");
   window.location.href = "tel:" + telefone;
