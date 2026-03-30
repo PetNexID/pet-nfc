@@ -41,6 +41,7 @@ input {
   margin: 10px 0;
   border-radius: 12px;
   border: none;
+  font-size: 15px;
 }
 
 button {
@@ -51,15 +52,41 @@ button {
   border: none;
   font-weight: bold;
   cursor: pointer;
+  transition: 0.2s;
 }
 
-.gerar { background: linear-gradient(45deg,#00c6ff,#0072ff); }
+button:hover {
+  transform: scale(1.05);
+}
+
+.gerar { background: linear-gradient(45deg,#00c6ff,#0072ff); color:white; }
 .copiar { background: linear-gradient(45deg,#00b09b,#00ffb3); }
 .testar { background: linear-gradient(45deg,#ff7e5f,#ffb88c); }
 
-#status { margin-top: 10px; }
-#hora { margin-top: 5px; font-size: 12px; color: #aaa; }
-#link { margin-top: 15px; font-size: 12px; color: #ccc; }
+#status {
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+#hora {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+#link {
+  margin-top: 15px;
+  font-size: 12px;
+  color: #ccc;
+  user-select: none;
+}
+
+.footer {
+  margin-top: 15px;
+  font-size: 11px;
+  opacity: 0.6;
+}
 
 </style>
 </head>
@@ -83,91 +110,128 @@ button {
 <p id="hora"></p>
 <p id="link"></p>
 
+<div class="footer">PetNex ID • Tecnologia para pets</div>
+
 </div>
 
 <script>
 
 let linkGerado = "";
 
+// 🔒 truncar link (visual)
 function truncarLink(url) {
+  if (url.length <= 40) return url;
   return url.substring(0, 25) + "..." + url.substring(url.length - 10);
+}
+
+// 🧹 limpeza pesada de string (resolve bug do Apps Script)
+function limparTexto(txt) {
+  return txt
+    .replace(/\s/g, "")   // remove espaços invisíveis
+    .replace(/\n/g, "")
+    .replace(/\r/g, "")
+    .toUpperCase();
+}
+
+// 🕒 data/hora
+function formatarDataHora() {
+  return new Date().toLocaleString('pt-BR');
 }
 
 async function gerar() {
 
   const statusUI = document.getElementById("status");
 
-  let tag = document.getElementById("tag").value.trim().toUpperCase();
-  let nome = document.getElementById("nome").value.trim();
-  let tel = document.getElementById("tel").value.trim();
-  let tutor = document.getElementById("tutor").value.trim();
+  try {
 
-  if (!tag || !nome || !tel) {
-    alert("Preencha todos os campos");
-    return;
+    let tag = document.getElementById("tag").value.trim().toUpperCase();
+    let nome = document.getElementById("nome").value.trim();
+    let tel = document.getElementById("tel").value.trim();
+    let tutor = document.getElementById("tutor").value.trim();
+
+    if (!tag || !nome || !tel) {
+      alert("Preencha todos os campos");
+      return;
+    }
+
+    const API = "https://script.google.com/macros/s/AKfycbww_8i3tmo0RTu_q5FCvQl1Q5O5-NDt4yAQ9pigX9Hsb-WCzO4x6qJFCoh3JwB5F3I8/exec";
+
+    statusUI.innerText = "🔍 Verificando TAG...";
+
+    // 🔎 VALIDAÇÃO
+    let res = await fetch(API + "?id=" + encodeURIComponent(tag));
+    let statusRaw = await res.text();
+
+    let status = limparTexto(statusRaw);
+
+    console.log("STATUS BRUTO:", statusRaw);
+    console.log("STATUS LIMPO:", status);
+
+    if (status === "NAO_EXISTE") {
+      statusUI.innerText = "❌ TAG NÃO EXISTE";
+      return;
+    }
+
+    if (status === "USADO") {
+      statusUI.innerText = "🚫 TAG USADA";
+      return;
+    }
+
+    if (status !== "LIVRE" && status !== "OK") {
+      statusUI.innerText = "❌ ERRO NA VALIDAÇÃO";
+      return;
+    }
+
+    statusUI.innerText = "💾 Ativando TAG...";
+
+    let dataHora = formatarDataHora();
+
+    // 🔥 ATIVAÇÃO
+    let ativacao = await fetch(
+      API +
+      "?id=" + tag +
+      "&nome=" + encodeURIComponent(nome) +
+      "&tel=" + tel +
+      "&tutor=" + encodeURIComponent(tutor) +
+      "&hora=" + encodeURIComponent(dataHora)
+    );
+
+    let resultadoRaw = await ativacao.text();
+    let resultado = limparTexto(resultadoRaw);
+
+    console.log("ATIVACAO BRUTO:", resultadoRaw);
+    console.log("ATIVACAO LIMPO:", resultado);
+
+    if (resultado !== "ATIVADO") {
+      statusUI.innerText = "❌ Falha ao ativar";
+      return;
+    }
+
+    // 🔗 LINK FINAL
+    linkGerado = "https://pet-nfc-pi.vercel.app/?id=" + tag;
+
+    statusUI.innerText = "✅ TAG ativada com sucesso";
+    document.getElementById("hora").innerText = "🕒 " + dataHora;
+    document.getElementById("link").innerText = truncarLink(linkGerado);
+
+  } catch (erro) {
+
+    console.error("ERRO:", erro);
+    statusUI.innerText = "❌ Erro de conexão";
   }
-
-  const API = "https://script.google.com/macros/s/AKfycbww_8i3tmo0RTu_q5FCvQl1Q5O5-NDt4yAQ9pigX9Hsb-WCzO4x6qJFCoh3JwB5F3I8/exec";
-
-  statusUI.innerText = "🔍 Verificando TAG...";
-
-  let res = await fetch(API + "?id=" + tag);
-  let status = (await res.text()).trim().toUpperCase();
-
-  console.log("STATUS:", status);
-
-  // 🚫 USADA
-  if (status === "USADO") {
-    statusUI.innerText = "🚫 TAG USADA";
-    return;
-  }
-
-  // ❌ NÃO EXISTE
-  if (status === "NAO_EXISTE") {
-    statusUI.innerText = "❌ TAG NÃO EXISTE";
-    return;
-  }
-
-  // ✅ LIVRE (OU OK)
-  if (status !== "LIVRE" && status !== "OK") {
-    statusUI.innerText = "❌ ERRO NA VALIDAÇÃO";
-    return;
-  }
-
-  statusUI.innerText = "💾 Ativando TAG...";
-
-  let ativacao = await fetch(
-    API +
-    "?id=" + tag +
-    "&nome=" + encodeURIComponent(nome) +
-    "&tel=" + tel +
-    "&tutor=" + encodeURIComponent(tutor)
-  );
-
-  let resultado = (await ativacao.text()).trim().toUpperCase();
-
-  console.log("ATIVACAO:", resultado);
-
-  if (resultado !== "ATIVADO") {
-    statusUI.innerText = "❌ Falha ao ativar";
-    return;
-  }
-
-  linkGerado = "https://pet-nfc-pi.vercel.app/?id=" + tag;
-
-  statusUI.innerText = "✅ TAG ativada";
-  document.getElementById("link").innerText = truncarLink(linkGerado);
 }
 
+// 📋 copiar link completo
 function copiar() {
   if (!linkGerado) return alert("Gere primeiro");
   navigator.clipboard.writeText(linkGerado);
-  alert("Link copiado!");
+  alert("✅ Link copiado completo!");
 }
 
+// 🔍 testar
 function testar() {
   if (!linkGerado) return alert("Gere primeiro");
-  window.open(linkGerado);
+  window.open(linkGerado, "_blank");
 }
 
 </script>
