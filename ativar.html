@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Ativando TAG...</title>
+<title>Ativação Premium</title>
 
 <style>
 body {
@@ -16,128 +16,133 @@ body {
   background:#0b1c22;
   color:white;
   font-family:Arial;
+}
+
+.container {
+  width:90%;
+  max-width:400px;
   text-align:center;
+}
+
+input, button {
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+}
+
+input {
+  background:#132f38;
+  color:white;
+}
+
+button {
+  background:#00c853;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:hover {
+  background:#00e676;
 }
 </style>
 </head>
 
 <body>
 
-<div>
-<h2 id="titulo">🔄 Ativando TAG...</h2>
+<div class="container">
+
+<h2 id="titulo">🔄 Verificando TAG...</h2>
 <p id="status">Aguarde...</p>
+
+<div id="form" style="display:none;">
+  <input type="text" id="nome" placeholder="Nome do pet">
+  <input type="tel" id="tel" placeholder="WhatsApp">
+  <input type="text" id="tutor" placeholder="Tutor (opcional)">
+  <button onclick="ativar()">Ativar TAG</button>
+</div>
+
 </div>
 
 <script>
 
-const API = "https://script.google.com/macros/s/AKfycbxiXPNp9SS1wvwQEojQM7tMNihcFASQ4GfwFyBKkP7QuIbCDPFo9qnSRDBeMeMh8P3o/exec".trim();
+const API = "COLE_AQUI_SUA_API";
+const id = new URLSearchParams(window.location.search).get("id");
 
-// 🔥 URL base garantida (resolve 100% dos erros do Vercel)
-const BASE_URL = window.location.origin;
-
-const params = new URLSearchParams(window.location.search);
-const id = (params.get("id") || "").toUpperCase().trim();
-
-async function ativarAutomatico() {
+async function init() {
 
   if (!id) {
     setStatus("ID inválido");
     return;
   }
 
-  try {
+  const res = await fetch(`${API}?id=${id}`);
+  let raw = (await res.text()).trim();
 
-    // 🔎 CONSULTA
-    const res = await fetch(`${API}?id=${id}`);
-    let raw = await res.text();
+  console.log("RAW:", raw);
 
-    console.log("RAW:", raw);
-
-    raw = raw.trim();
-
-    // 🔥 JSON → já ativo
-    if (raw.startsWith("{")) {
-
-      setTitulo("TAG já ativada");
-      setStatus("🐾 Esta TAG já está em uso. Redirecionando...");
-
-      redirect();
-      return;
-    }
-
-    const status = raw.toUpperCase();
-
-    // ❌ não existe
-    if (status === "NAO_EXISTE") {
-      setTitulo("Erro");
-      setStatus("❌ TAG não existe");
-      return;
-    }
-
-    // 🔥 já usado
-    if (status === "USADO") {
-
-      setTitulo("TAG já ativada");
-      setStatus("🐾 Esta TAG já está em uso. Redirecionando...");
-
-      redirect();
-      return;
-    }
-
-    // 🟢 LIVRE
-    if (status === "LIVRE") {
-
-      setTitulo("Ativação necessária");
-      setStatus("Preencha os dados...");
-
-      const nome = prompt("Nome do pet:");
-      const tel = prompt("WhatsApp:");
-      const tutor = prompt("Tutor:");
-
-      if (!nome || !tel) {
-        setStatus("⚠️ Dados incompletos");
-        return;
-      }
-
-      setStatus("Ativando...");
-
-      const ativacao = await fetch(
-        `${API}?id=${id}&nome=${encodeURIComponent(nome.trim())}&tel=${encodeURIComponent(tel.trim())}&tutor=${encodeURIComponent((tutor || "").trim())}`
-      );
-
-      let resultado = await ativacao.text();
-      resultado = resultado.trim().toUpperCase();
-
-      console.log("RESULTADO:", resultado);
-
-      if (!resultado.includes("ATIVADO")) {
-        setStatus("❌ Erro ao ativar");
-        return;
-      }
-
-      setStatus("✅ Ativado com sucesso!");
-
-      redirect(1500);
-      return;
-    }
-
-    setStatus("Erro inesperado: " + raw);
-
-  } catch (err) {
-    console.error(err);
-    setStatus("❌ Erro de conexão");
+  // 🔥 TAG JÁ ATIVA
+  if (raw.startsWith("{")) {
+    setTitulo("TAG já ativada");
+    setStatus("Redirecionando...");
+    redirect();
+    return;
   }
 
+  const status = raw.toUpperCase();
+
+  if (status === "LIVRE") {
+    setTitulo("🔒 Ativação Premium");
+    setStatus("Preencha os dados para ativar");
+    document.getElementById("form").style.display = "block";
+    return;
+  }
+
+  if (status === "NAO_EXISTE") {
+    setStatus("TAG não existe");
+    return;
+  }
+
+  setStatus("Erro: " + raw);
 }
 
-// 🔥 REDIRECIONAMENTO ABSOLUTO (NUNCA QUEBRA)
+async function ativar() {
+
+  const nome = document.getElementById("nome").value.trim();
+  const tel = document.getElementById("tel").value.trim();
+  const tutor = document.getElementById("tutor").value.trim();
+
+  if (!nome || !tel) {
+    setStatus("Preencha nome e WhatsApp");
+    return;
+  }
+
+  setStatus("Ativando...");
+
+  const res = await fetch(
+    `${API}?id=${encodeURIComponent(id)}&nome=${encodeURIComponent(nome)}&tel=${encodeURIComponent(tel)}&tutor=${encodeURIComponent(tutor)}`
+  );
+
+  let result = (await res.text()).trim().toUpperCase();
+
+  if (!result.includes("ATIVADO")) {
+    setStatus("Erro ao ativar");
+    return;
+  }
+
+  setStatus("Ativado com sucesso!");
+  redirect(1500);
+}
+
 function redirect(delay = 2000) {
   setTimeout(() => {
-    window.location.href = `${window.location.origin}/?id=${id}`;
+    window.location.href = `/?id=${id}`;
   }, delay);
 }
 
-// helpers
 function setStatus(msg) {
   document.getElementById("status").innerText = msg;
 }
@@ -146,7 +151,7 @@ function setTitulo(msg) {
   document.getElementById("titulo").innerText = msg;
 }
 
-ativarAutomatico();
+init();
 
 </script>
 
