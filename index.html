@@ -3,7 +3,6 @@
 <head>
 
 <meta charset="UTF-8">
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>PetNex ID</title>
@@ -57,6 +56,7 @@ button {
   border: none;
   border-radius: 14px;
   font-weight: bold;
+  cursor: pointer;
 }
 
 .whats {
@@ -85,7 +85,7 @@ button {
 Tutor: <strong id="tutor">---</strong>
 </div>
 
-<button class="whats" onclick="enviar()">📍 WhatsApp</button>
+<button class="whats" onclick="enviarWhats()">💬 WhatsApp</button>
 <button class="ligar" onclick="ligar()">📞 Ligar</button>
 
 </div>
@@ -109,45 +109,53 @@ async function carregar() {
 
   try {
 
-    let res = await fetch(API + "?id=" + id + "&consulta=1");
-    let txt = await res.text();
+    let res = await fetch(`${API}?id=${id}`);
+    let txt = (await res.text()).trim();
 
-    if (txt === "INVALIDO") {
-      throw new Error();
-    }
+    // 🔥 se vier JSON (tag ativa)
+    if (!txt.startsWith("{")) throw new Error();
 
     let data = JSON.parse(txt);
 
-    nomePet = data.nome;
-    telefone = data.tel;
+    nomePet = data.NOME;
+    telefone = data.TEL;
 
-    document.getElementById("nome").innerText = "🐶 " + data.nome;
-    document.getElementById("tutor").innerText = data.tutor;
+    document.getElementById("nome").innerText = "🐶 " + data.NOME;
+    document.getElementById("tutor").innerText = data.TUTOR;
 
   } catch {
     document.getElementById("nome").innerText = "Erro ao carregar";
   }
 }
 
-function enviar() {
+// 🚀 WHATSAPP OTIMIZADO (ABRE RÁPIDO)
+function enviarWhats() {
 
   if (!telefone) return alert("Telefone não disponível");
 
   navigator.geolocation.getCurrentPosition((pos) => {
 
-    let maps = "https://maps.google.com/?q=" +
-      pos.coords.latitude + "," + pos.coords.longitude;
+    const maps = `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
 
-    let msg = encodeURIComponent("🐶 Encontrei " + nomePet + "!\n📍 " + maps);
+    const msg = encodeURIComponent(`🐶 Encontrei ${nomePet}!\n📍 ${maps}`);
 
-    window.location.href = "https://wa.me/" + telefone + "?text=" + msg;
+    // 🔥 tenta abrir direto no app
+    window.location.href = `whatsapp://send?phone=${telefone}&text=${msg}`;
 
+    // 🔁 fallback (caso não abra)
+    setTimeout(() => {
+      window.location.href = `https://api.whatsapp.com/send?phone=${telefone}&text=${msg}`;
+    }, 1200);
+
+  }, () => {
+    alert("Não foi possível obter localização");
   });
 }
 
+// 📞 ligação direta
 function ligar() {
   if (!telefone) return alert("Telefone não disponível");
-  window.location.href = "tel:" + telefone;
+  window.location.href = `tel:${telefone}`;
 }
 
 </script>
