@@ -32,6 +32,9 @@ body {
 
 const API = "COLE_AQUI_SUA_URL_NOVA";
 
+// 🔥 sempre usa caminho relativo correto
+const REDIRECT_URL = "index.html";
+
 const params = new URLSearchParams(window.location.search);
 const id = (params.get("id") || "").toUpperCase().trim();
 
@@ -45,55 +48,52 @@ async function ativarAutomatico() {
   try {
 
     // 🔎 CONSULTA
-    let res = await fetch(API + "?id=" + id);
+    const res = await fetch(`${API}?id=${id}`);
     let raw = await res.text();
 
     console.log("RAW:", raw);
 
-    // 🔥 Se vier JSON → já está ativa
+    // 🔥 LIMPEZA FORTE
+    raw = raw.trim();
+
+    // 🔥 SE FOR JSON (TAG JÁ ATIVA)
     if (raw.startsWith("{")) {
 
       setTitulo("TAG já ativada");
       setStatus("🐾 Esta TAG já está em uso. Redirecionando...");
 
-      setTimeout(() => {
-        window.location.href = "/index.html?id=" + id;
-      }, 2000);
-
+      redirect();
       return;
     }
 
-    let status = raw.trim().toUpperCase();
+    const status = raw.toUpperCase();
 
-    // ❌ não existe
+    // ❌ TAG NÃO EXISTE
     if (status === "NAO_EXISTE") {
       setTitulo("Erro");
       setStatus("❌ TAG não existe");
       return;
     }
 
-    // 🔥 já usada (fallback extra)
+    // 🔥 TAG JÁ USADA
     if (status === "USADO") {
 
       setTitulo("TAG já ativada");
       setStatus("🐾 Esta TAG já está em uso. Redirecionando...");
 
-      setTimeout(() => {
-        window.location.href = "/index.html?id=" + id;
-      }, 2000);
-
+      redirect();
       return;
     }
 
-    // 🟢 LIVRE → ativação
+    // 🟢 LIVRE → ATIVAÇÃO
     if (status === "LIVRE") {
 
       setTitulo("Ativação necessária");
       setStatus("Preencha os dados...");
 
-      let nome = prompt("Nome do pet:");
-      let tel = prompt("WhatsApp:");
-      let tutor = prompt("Tutor:");
+      const nome = prompt("Nome do pet:");
+      const tel = prompt("WhatsApp:");
+      const tutor = prompt("Tutor:");
 
       if (!nome || !tel) {
         setStatus("⚠️ Dados incompletos");
@@ -102,21 +102,16 @@ async function ativarAutomatico() {
 
       setStatus("Ativando...");
 
-      let ativacao = await fetch(
-        API +
-        "?id=" + id +
-        "&nome=" + encodeURIComponent(nome.trim()) +
-        "&tel=" + encodeURIComponent(tel.trim()) +
-        "&tutor=" + encodeURIComponent((tutor || "").trim())
+      const ativacao = await fetch(
+        `${API}?id=${id}&nome=${encodeURIComponent(nome.trim())}&tel=${encodeURIComponent(tel.trim())}&tutor=${encodeURIComponent((tutor || "").trim())}`
       );
 
-      let rawAtivacao = await ativacao.text();
-
-      let resultado = rawAtivacao.trim().toUpperCase();
+      let resultado = await ativacao.text();
+      resultado = resultado.trim().toUpperCase();
 
       console.log("RESULTADO:", resultado);
 
-      // 🔥 CORREÇÃO AQUI
+      // 🔥 validação robusta
       if (!resultado.includes("ATIVADO")) {
         setStatus("❌ Erro ao ativar");
         return;
@@ -124,14 +119,11 @@ async function ativarAutomatico() {
 
       setStatus("✅ Ativado com sucesso!");
 
-      setTimeout(() => {
-      window.location.href = "/index.html?id=" + id;
-      }, 1500);
-
+      redirect(1500);
       return;
     }
 
-    // fallback
+    // 🔥 fallback real (mostra retorno)
     setStatus("Erro inesperado: " + raw);
 
   } catch (err) {
@@ -139,6 +131,13 @@ async function ativarAutomatico() {
     setStatus("❌ Erro de conexão");
   }
 
+}
+
+// 🔁 REDIRECIONAMENTO SEGURO (resolve bug do Vercel)
+function redirect(delay = 2000) {
+  setTimeout(() => {
+    window.location.href = `${REDIRECT_URL}?id=${id}`;
+  }, delay);
 }
 
 // helpers
