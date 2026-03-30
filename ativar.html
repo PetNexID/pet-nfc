@@ -44,27 +44,13 @@ async function ativarAutomatico() {
 
   try {
 
-    // 🔎 consulta status
     let res = await fetch(API + "?id=" + id);
     let raw = await res.text();
 
-    // 🔥 limpeza pesada (zero bug)
-    let status = raw
-      .replace(/\s/g, "")
-      .toUpperCase();
-
     console.log("RAW:", raw);
-    console.log("STATUS:", status);
 
-    // ❌ não existe
-    if (status === "NAO_EXISTE") {
-      setTitulo("Erro");
-      setStatus("❌ TAG não existe");
-      return;
-    }
-
-    // 🔥 já usada
-    if (status === "USADO") {
+    // 🔥 DETECTA JSON (TAG JÁ ATIVA)
+    if (raw.startsWith("{")) {
 
       setTitulo("TAG já ativada");
       setStatus("🐾 Esta TAG já está em uso. Abrindo...");
@@ -76,7 +62,17 @@ async function ativarAutomatico() {
       return;
     }
 
-    // 🟢 livre → ativar
+    // 🔥 limpeza padrão
+    let status = raw.replace(/\s/g, "").toUpperCase();
+
+    // ❌ não existe
+    if (status === "NAO_EXISTE") {
+      setTitulo("Erro");
+      setStatus("❌ TAG não existe");
+      return;
+    }
+
+    // 🟢 LIVRE → ativar
     if (status === "LIVRE") {
 
       setTitulo("Ativação necessária");
@@ -102,10 +98,7 @@ async function ativarAutomatico() {
       );
 
       let rawAtivacao = await ativacao.text();
-
-      let resultado = rawAtivacao
-        .replace(/\s/g, "")
-        .toUpperCase();
+      let resultado = rawAtivacao.replace(/\s/g, "").toUpperCase();
 
       console.log("ATIVACAO:", resultado);
 
@@ -123,8 +116,8 @@ async function ativarAutomatico() {
       return;
     }
 
-    // ⚠️ fallback (agora mostra o retorno real)
-    setStatus("Erro inesperado: " + status);
+    // fallback real
+    setStatus("Erro inesperado: " + raw);
 
   } catch (err) {
     console.error(err);
