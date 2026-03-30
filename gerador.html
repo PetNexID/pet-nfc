@@ -72,6 +72,12 @@ button {
   color: #ccc;
 }
 
+/* STATUS */
+#status {
+  margin-top: 10px;
+  font-size: 13px;
+}
+
 /* RODAPÉ */
 .footer {
   margin-top: 15px;
@@ -91,6 +97,9 @@ button {
 
 <h2>🐶 Gerador NFC 🐶</h2>
 
+<!-- 🔥 NOVO CAMPO -->
+<input id="tag" placeholder="Código da TAG">
+
 <input id="nome" placeholder="Nome do pet">
 <input id="tel" placeholder="WhatsApp (5584...)">
 <input id="tutor" placeholder="Nome do tutor">
@@ -99,6 +108,7 @@ button {
 <button class="copiar" onclick="copiar()">Copiar</button>
 <button class="testar" onclick="testar()">Testar</button>
 
+<p id="status"></p>
 <p id="link"></p>
 
 <div class="footer">PetNex ID • Tecnologia para pets</div>
@@ -109,16 +119,45 @@ button {
 
 let linkGerado = "";
 
-function gerar() {
+// 🔥 SUA API
+async function validarTag(id) {
 
+  let url = "https://script.google.com/macros/s/AKfycbzvyvR_mfKgoT4eOntTp8YqAz2iuNF4NCBMX1F_3j5UAFjLwD0GZNc6Pz6Nia2N7hGJ/exec?id=" + id;
+
+  let res = await fetch(url);
+  let texto = await res.text();
+
+  return texto;
+}
+
+async function gerar() {
+
+  let tag = document.getElementById("tag").value.trim();
   let nome = document.getElementById("nome").value.trim();
   let tel = document.getElementById("tel").value.trim();
   let tutor = document.getElementById("tutor").value.trim();
 
-  if (!nome || !tel) {
-    alert("Preencha nome e telefone");
+  if (!tag || !nome || !tel) {
+    alert("Preencha todos os campos");
     return;
   }
+
+  document.getElementById("status").innerText = "🔍 Validando TAG...";
+
+  let status = await validarTag(tag);
+
+  if (status == "NAO_EXISTE") {
+    document.getElementById("status").innerText = "❌ TAG inválida";
+    return;
+  }
+
+  if (status == "USADO") {
+    document.getElementById("status").innerText = "⚠️ TAG já utilizada";
+    return;
+  }
+
+  // ✅ TAG OK
+  document.getElementById("status").innerText = "✅ TAG válida";
 
   let base = "https://pet-nfc-pi.vercel.app/";
 
