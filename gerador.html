@@ -78,6 +78,13 @@ button {
   font-size: 13px;
 }
 
+/* DATA HORA */
+#hora {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #aaa;
+}
+
 /* RODAPÉ */
 .footer {
   margin-top: 15px;
@@ -107,6 +114,7 @@ button {
 <button class="testar" onclick="testar()">Testar</button>
 
 <p id="status"></p>
+<p id="hora"></p>
 <p id="link"></p>
 
 <div class="footer">PetNex ID • Tecnologia para pets</div>
@@ -116,6 +124,15 @@ button {
 <script>
 
 let linkGerado = "";
+
+function formatarDataHora() {
+  let agora = new Date();
+
+  let data = agora.toLocaleDateString('pt-BR');
+  let hora = agora.toLocaleTimeString('pt-BR');
+
+  return data + " " + hora;
+}
 
 async function gerar() {
 
@@ -131,10 +148,8 @@ async function gerar() {
 
   document.getElementById("status").innerText = "🔍 Validando TAG...";
 
-  // 🔥 SUA API NOVA
   let baseApi = "https://script.google.com/macros/s/AKfycby1nRnLU19QldY4lbEk_VKJEqTF8QnIQlq3PeOWmyo1SnMP71OCJdAIZC_dCImZjn4c/exec";
 
-  // 🔹 valida primeiro
   let res = await fetch(baseApi + "?id=" + tag);
   let status = await res.text();
 
@@ -148,15 +163,18 @@ async function gerar() {
     return;
   }
 
-  // 🔥 ATIVAÇÃO REAL
   document.getElementById("status").innerText = "💾 Ativando TAG...";
+
+  // 🔥 CAPTURA DATA/HORA LOCAL
+  let dataHora = formatarDataHora();
 
   let ativacao = await fetch(
     baseApi +
     "?id=" + tag +
     "&nome=" + encodeURIComponent(nome) +
     "&tel=" + tel +
-    "&tutor=" + encodeURIComponent(tutor)
+    "&tutor=" + encodeURIComponent(tutor) +
+    "&hora=" + encodeURIComponent(dataHora) // já preparado
   );
 
   let resultado = await ativacao.text();
@@ -166,8 +184,10 @@ async function gerar() {
     return;
   }
 
-  // ✅ SUCESSO
   document.getElementById("status").innerText = "✅ TAG ativada com sucesso";
+
+  // 🔥 MOSTRA NA TELA
+  document.getElementById("hora").innerText = "🕒 Ativado em: " + dataHora;
 
   let base = "https://pet-nfc-pi.vercel.app/";
 
