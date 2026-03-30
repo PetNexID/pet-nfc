@@ -97,9 +97,7 @@ button {
 
 <h2>🐶 Gerador NFC 🐶</h2>
 
-<!-- 🔥 NOVO CAMPO -->
 <input id="tag" placeholder="Código da TAG">
-
 <input id="nome" placeholder="Nome do pet">
 <input id="tel" placeholder="WhatsApp (5584...)">
 <input id="tutor" placeholder="Nome do tutor">
@@ -119,17 +117,6 @@ button {
 
 let linkGerado = "";
 
-// 🔥 SUA API
-async function validarTag(id) {
-
-  let url = "https://script.google.com/macros/s/AKfycbzvyvR_mfKgoT4eOntTp8YqAz2iuNF4NCBMX1F_3j5UAFjLwD0GZNc6Pz6Nia2N7hGJ/exec?id=" + id;
-
-  let res = await fetch(url);
-  let texto = await res.text();
-
-  return texto;
-}
-
 async function gerar() {
 
   let tag = document.getElementById("tag").value.trim();
@@ -144,7 +131,8 @@ async function gerar() {
 
   document.getElementById("status").innerText = "🔍 Validando TAG...";
 
-  let baseApi = "https://script.google.com/macros/s/AKfycbzvyvR_mfKgoT4eOntTp8YqAz2iuNF4NCBMX1F_3j5UAFjLwD0GZNc6Pz6Nia2N7hGJ/exec";
+  // 🔥 SUA API NOVA
+  let baseApi = "https://script.google.com/macros/s/AKfycby1nRnLU19QldY4lbEk_VKJEqTF8QnIQlq3PeOWmyo1SnMP71OCJdAIZC_dCImZjn4c/exec";
 
   // 🔹 valida primeiro
   let res = await fetch(baseApi + "?id=" + tag);
@@ -160,7 +148,7 @@ async function gerar() {
     return;
   }
 
-  // 🔥 ATIVAÇÃO REAL (GRAVA NO BANCO)
+  // 🔥 ATIVAÇÃO REAL
   document.getElementById("status").innerText = "💾 Ativando TAG...";
 
   let ativacao = await fetch(
@@ -190,6 +178,7 @@ async function gerar() {
 
   document.getElementById("link").innerText = linkGerado;
 }
+
 function copiar() {
   if (!linkGerado) return alert("Gere primeiro");
   navigator.clipboard.writeText(linkGerado);
