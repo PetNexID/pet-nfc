@@ -1,8 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>PetNex ID • Gerador</title>
+
+<style>
+
+body {
+  margin: 0;
+  height: 100vh;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: radial-gradient(circle at top, #1c3b34, #0b1c22 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(18px);
+  padding: 30px;
+  border-radius: 22px;
+  width: 90%;
+  max-width: 380px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+.Logo {
+  width: 160px;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 12px rgba(0,255,180,0.4));
+}
+
+input {
+  width: 90%;
+  padding: 14px;
+  margin: 10px 0;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+}
+
+button {
+  width: 90%;
+  padding: 14px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: scale(1.04);
+}
+
+.gerar { background: linear-gradient(45deg,#00c6ff,#0072ff); color:white; }
+.copiar { background: linear-gradient(45deg,#00b09b,#00ffb3); }
+.testar { background: linear-gradient(45deg,#ff7e5f,#ffb88c); }
+
+#link {
+  margin-top: 15px;
+  font-size: 12px;
+  color: #ccc;
+  user-select: none;
+}
+
+#status {
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+#hora {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.footer {
+  margin-top: 15px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<img src="Logo.png" class="Logo">
+
+<h2>🐶 Gerador NFC 🐶</h2>
+
+<input id="tag" placeholder="Código da TAG">
+<input id="nome" placeholder="Nome do pet">
+<input id="tel" placeholder="WhatsApp (5584...)">
+<input id="tutor" placeholder="Nome do tutor">
+
+<button class="gerar" onclick="gerar()">Gerar Link</button>
+<button class="copiar" onclick="copiar()">Copiar</button>
+<button class="testar" onclick="testar()">Testar</button>
+
+<p id="status"></p>
+<p id="hora"></p>
+<p id="link"></p>
+
+<div class="footer">PetNex ID • Tecnologia para pets</div>
+
+</div>
+
 <script>
 
 let linkGerado = "";
 
-/* 🔒 link visual */
+/* 🔒 impedir cópia visual */
+document.addEventListener("contextmenu", e => e.preventDefault());
+
+/* 🔒 link truncado na tela */
 function truncarLink(url) {
   if (url.length <= 40) return url;
   return url.substring(0, 25) + "..." + url.substring(url.length - 10);
@@ -16,68 +137,74 @@ function formatarDataHora() {
 
 async function gerar() {
 
-  let tag = document.getElementById("tag").value.trim();
-  let nome = document.getElementById("nome").value.trim();
-  let tel = document.getElementById("tel").value.trim();
-  let tutor = document.getElementById("tutor").value.trim();
+  try {
 
-  if (!tag || !nome || !tel) {
-    alert("Preencha todos os campos");
-    return;
+    let tag = document.getElementById("tag").value.trim();
+    let nome = document.getElementById("nome").value.trim();
+    let tel = document.getElementById("tel").value.trim();
+    let tutor = document.getElementById("tutor").value.trim();
+
+    if (!tag || !nome || !tel) {
+      alert("Preencha todos os campos");
+      return;
+    }
+
+    let statusUI = document.getElementById("status");
+
+    statusUI.innerText = "🔍 Validando TAG...";
+
+    const API = "https://script.google.com/macros/s/AKfycbww_8i3tmo0RTu_q5FCvQl1Q5O5-NDt4yAQ9pigX9Hsb-WCzO4x6qJFCoh3JwB5F3I8/exec";
+
+    // 🔎 valida
+    let res = await fetch(API + "?id=" + encodeURIComponent(tag));
+    let status = await res.text();
+
+    if (status === "NAO_EXISTE") {
+      statusUI.innerText = "❌ TAG não existe";
+      return;
+    }
+
+    if (status === "USADO") {
+      statusUI.innerText = "⚠️ TAG já ativada";
+      return;
+    }
+
+    statusUI.innerText = "💾 Ativando TAG...";
+
+    let dataHora = formatarDataHora();
+
+    // 🔥 ativa
+    let ativacao = await fetch(
+      API +
+      "?id=" + tag +
+      "&nome=" + encodeURIComponent(nome) +
+      "&tel=" + tel +
+      "&tutor=" + encodeURIComponent(tutor) +
+      "&hora=" + encodeURIComponent(dataHora)
+    );
+
+    let resultado = await ativacao.text();
+
+    if (resultado !== "ATIVADO") {
+      throw new Error("Erro ativação");
+    }
+
+    // ✅ LINK FINAL (PADRÃO NOVO)
+    linkGerado = "https://pet-nfc-pi.vercel.app/?id=" + tag;
+
+    statusUI.innerText = "✅ TAG ativada com sucesso";
+    document.getElementById("hora").innerText = "🕒 Ativado em: " + dataHora;
+
+    // 🔒 mostra truncado
+    document.getElementById("link").innerText = truncarLink(linkGerado);
+
+  } catch (erro) {
+    console.error(erro);
+    document.getElementById("status").innerText = "❌ Erro ao ativar";
   }
-
-  let statusUI = document.getElementById("status");
-
-  statusUI.innerText = "🔍 Validando TAG...";
-
-  let API = "https://script.google.com/macros/s/AKfycbww_8i3tmo0RTu_q5FCvQl1Q5O5-NDt4yAQ9pigX9Hsb-WCzO4x6qJFCoh3JwB5F3I8/exec";
-
-  // 🔎 valida
-  let res = await fetch(API + "?id=" + encodeURIComponent(tag));
-  let status = await res.text();
-
-  if (status === "NAO_EXISTE") {
-    statusUI.innerText = "❌ TAG não existe";
-    return;
-  }
-
-  if (status === "USADO") {
-    statusUI.innerText = "⚠️ TAG já ativada";
-    return;
-  }
-
-  statusUI.innerText = "💾 Ativando TAG...";
-
-  let dataHora = formatarDataHora();
-
-  // 🔥 ativa
-  let ativacao = await fetch(
-    API +
-    "?id=" + tag +
-    "&nome=" + encodeURIComponent(nome) +
-    "&tel=" + tel +
-    "&tutor=" + encodeURIComponent(tutor) +
-    "&hora=" + encodeURIComponent(dataHora)
-  );
-
-  let resultado = await ativacao.text();
-
-  if (resultado !== "ATIVADO") {
-    statusUI.innerText = "❌ Falha na ativação";
-    return;
-  }
-
-  // ✅ link final (SIMPLES E LIMPO)
-  linkGerado = "https://pet-nfc-pi.vercel.app/?id=" + tag;
-
-  statusUI.innerText = "✅ TAG ativada com sucesso";
-  document.getElementById("hora").innerText = "🕒 " + dataHora;
-
-  // 🔒 MOSTRA TRUNCADO
-  document.getElementById("link").innerText = truncarLink(linkGerado);
 }
 
-/* 📋 copiar COMPLETO */
+/* 📋 copia link COMPLETO */
 function copiar() {
   if (!linkGerado) return alert("Gere primeiro");
 
@@ -93,3 +220,6 @@ function testar() {
 }
 
 </script>
+
+</body>
+</html>
