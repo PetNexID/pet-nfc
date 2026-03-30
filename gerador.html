@@ -179,11 +179,12 @@ async function gerar() {
 
   let resultado = await ativacao.text();
 
-  if (resultado != "ATIVADO") {
-    document.getElementById("status").innerText = "Erro ao ativar";
-    return;
-  }
+  if (!resultado.startsWith("ATIVADO")) {
+  document.getElementById("status").innerText = "Erro ao ativar";
+  return;
+}
 
+  
   document.getElementById("status").innerText = "✅ TAG ativada com sucesso";
 
   // 🔥 MOSTRA NA TELA
