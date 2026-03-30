@@ -148,7 +148,7 @@ async function gerar() {
 
   document.getElementById("status").innerText = "🔍 Validando TAG...";
 
-  let baseApi = "https://script.google.com/macros/s/AKfycbwUNuyC5tCGZSiy5of2dYf01nCYDx_WDWrbU0KucDgxO_r4vHGCIK6l6-nuLgKGSRnT/exec";
+  let baseApi = "https://script.google.com/macros/s/AKfycbwpX27k0VxqWrkC68QJlRVjLuDT4GYF9OFeAZLbsutDCvvFB9u13TuGSebTzPWY7_eN/exec";
 
   let res = await fetch(baseApi + "?id=" + tag);
   let status = await res.text();
