@@ -30,18 +30,12 @@ body {
   box-shadow: 0 20px 60px rgba(0,0,0,0.6);
 }
 
-.Logo {
-  width: 160px;
-  margin-bottom: 10px;
-}
-
 input {
   width: 90%;
   padding: 14px;
   margin: 10px 0;
   border-radius: 12px;
   border: none;
-  font-size: 15px;
 }
 
 button {
@@ -52,41 +46,15 @@ button {
   border: none;
   font-weight: bold;
   cursor: pointer;
-  transition: 0.2s;
-}
-
-button:hover {
-  transform: scale(1.05);
 }
 
 .gerar { background: linear-gradient(45deg,#00c6ff,#0072ff); color:white; }
 .copiar { background: linear-gradient(45deg,#00b09b,#00ffb3); }
 .testar { background: linear-gradient(45deg,#ff7e5f,#ffb88c); }
 
-#status {
-  margin-top: 12px;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-#hora {
-  margin-top: 5px;
-  font-size: 12px;
-  color: #aaa;
-}
-
-#link {
-  margin-top: 15px;
-  font-size: 12px;
-  color: #ccc;
-  user-select: none;
-}
-
-.footer {
-  margin-top: 15px;
-  font-size: 11px;
-  opacity: 0.6;
-}
+#status { margin-top: 10px; font-weight: bold; }
+#hora { margin-top: 5px; font-size: 12px; color: #aaa; }
+#link { margin-top: 15px; font-size: 12px; color: #ccc; }
 
 </style>
 </head>
@@ -110,31 +78,23 @@ button:hover {
 <p id="hora"></p>
 <p id="link"></p>
 
-<div class="footer">PetNex ID • Tecnologia para pets</div>
-
 </div>
 
 <script>
 
 let linkGerado = "";
 
-// 🔒 truncar link (visual)
-function truncarLink(url) {
-  if (url.length <= 40) return url;
+// 🔒 limpar retorno do Apps Script
+function limpar(txt) {
+  return txt.replace(/\s/g, "").toUpperCase();
+}
+
+// 🔒 truncar visual
+function truncar(url) {
   return url.substring(0, 25) + "..." + url.substring(url.length - 10);
 }
 
-// 🧹 limpeza pesada de string (resolve bug do Apps Script)
-function limparTexto(txt) {
-  return txt
-    .replace(/\s/g, "")   // remove espaços invisíveis
-    .replace(/\n/g, "")
-    .replace(/\r/g, "")
-    .toUpperCase();
-}
-
-// 🕒 data/hora
-function formatarDataHora() {
+function agora() {
   return new Date().toLocaleString('pt-BR');
 }
 
@@ -158,14 +118,10 @@ async function gerar() {
 
     statusUI.innerText = "🔍 Verificando TAG...";
 
-    // 🔎 VALIDAÇÃO
-    let res = await fetch(API + "?id=" + encodeURIComponent(tag));
-    let statusRaw = await res.text();
+    let res = await fetch(API + "?id=" + tag);
+    let status = limpar(await res.text());
 
-    let status = limparTexto(statusRaw);
-
-    console.log("STATUS BRUTO:", statusRaw);
-    console.log("STATUS LIMPO:", status);
+    console.log("STATUS:", status);
 
     if (status === "NAO_EXISTE") {
       statusUI.innerText = "❌ TAG NÃO EXISTE";
@@ -177,16 +133,15 @@ async function gerar() {
       return;
     }
 
-    if (status !<> "LIVRE" && status !<> "USADO") {
+    if (status !== "LIVRE") {
       statusUI.innerText = "❌ ERRO NA VALIDAÇÃO";
       return;
     }
 
     statusUI.innerText = "💾 Ativando TAG...";
 
-    let dataHora = formatarDataHora();
+    let dataHora = agora();
 
-    // 🔥 ATIVAÇÃO
     let ativacao = await fetch(
       API +
       "?id=" + tag +
@@ -196,23 +151,20 @@ async function gerar() {
       "&hora=" + encodeURIComponent(dataHora)
     );
 
-    let resultadoRaw = await ativacao.text();
-    let resultado = limparTexto(resultadoRaw);
+    let resultado = limpar(await ativacao.text());
 
-    console.log("ATIVACAO BRUTO:", resultadoRaw);
-    console.log("ATIVACAO LIMPO:", resultado);
+    console.log("ATIVACAO:", resultado);
 
     if (resultado !== "ATIVADO") {
       statusUI.innerText = "❌ Falha ao ativar";
       return;
     }
 
-    // 🔗 LINK FINAL
     linkGerado = "https://pet-nfc-pi.vercel.app/?id=" + tag;
 
     statusUI.innerText = "✅ TAG ativada com sucesso";
     document.getElementById("hora").innerText = "🕒 " + dataHora;
-    document.getElementById("link").innerText = truncarLink(linkGerado);
+    document.getElementById("link").innerText = truncar(linkGerado);
 
   } catch (erro) {
 
@@ -221,17 +173,15 @@ async function gerar() {
   }
 }
 
-// 📋 copiar link completo
 function copiar() {
   if (!linkGerado) return alert("Gere primeiro");
   navigator.clipboard.writeText(linkGerado);
-  alert("✅ Link copiado completo!");
+  alert("Link copiado!");
 }
 
-// 🔍 testar
 function testar() {
   if (!linkGerado) return alert("Gere primeiro");
-  window.open(linkGerado, "_blank");
+  window.open(linkGerado);
 }
 
 </script>
