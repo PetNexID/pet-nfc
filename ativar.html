@@ -4,29 +4,68 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  
-<title>Ativando TAG...</title>
+<title>PetNex ID</title>
 
 <style>
+
 body {
-  margin:0;
-  height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#0b1c22;
-  color:white;
-  font-family:Arial;
-  text-align:center;
+  margin: 0;
+  height: 100vh;
+  font-family: 'Segoe UI', Arial;
+  background: radial-gradient(circle at top, #1c3b34, #0b1c22 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.card {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px);
+  padding: 25px;
+  border-radius: 22px;
+  width: 90%;
+  max-width: 360px;
+  text-align: center;
+  color: white;
+}
+
+input {
+  width: 90%;
+  padding: 14px;
+  margin: 8px 0;
+  border-radius: 12px;
+  border: none;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  border-radius: 14px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.ativar {
+  background: linear-gradient(45deg,#00ffb3,#00c6ff);
+}
+
+.erro {
+  color: #ff4d4d;
+}
+
 </style>
 </head>
 
 <body>
 
-<div>
-<h2>🔄 Ativando TAG...</h2>
-<p id="status">Aguarde...</p>
+<div class="card">
+
+<h2 id="titulo">🔄 Verificando TAG...</h2>
+
+<div id="conteudo"></div>
+
 </div>
 
 <script>
@@ -34,41 +73,67 @@ body {
 const API = "https://script.google.com/macros/s/AKfycbww_8i3tmo0RTu_q5FCvQl1Q5O5-NDt4yAQ9pigX9Hsb-WCzO4x6qJFCoh3JwB5F3I8/exec";
 
 const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
+const id = params.get("id")?.trim().toUpperCase();
 
-async function ativarAutomatico() {
+function limpar(txt) {
+  return txt.replace(/\s/g, "").toUpperCase();
+}
+
+async function iniciar() {
 
   if (!id) {
-    document.getElementById("status").innerText = "ID inválido";
+    document.getElementById("titulo").innerText = "Erro";
+    document.getElementById("conteudo").innerHTML = "TAG inválida";
     return;
   }
 
-  // 🔎 valida
   let res = await fetch(API + "?id=" + id);
-  let status = (await res.text()).replace(/\s/g,"").toUpperCase();
+  let status = limpar(await res.text());
 
-  if (status === "NAO_EXISTE") {
-    document.getElementById("status").innerText = "TAG não existe";
+  console.log("STATUS:", status);
+
+  // ❌ NÃO EXISTE
+  if (status.includes("NAO_EXISTE")) {
+    document.getElementById("titulo").innerText = "❌ TAG inválida";
+    document.getElementById("conteudo").innerHTML =
+      "<p class='erro'>Esta TAG não existe no sistema</p>";
     return;
   }
 
-  if (status === "USADO") {
-    // 🔥 já ativa → vai direto pro pet
+  // 🐶 JÁ ATIVA → VAI DIRETO
+  if (status.includes("USADO")) {
     window.location.href = "/?id=" + id;
     return;
   }
 
-  // 🔥 pega dados automaticamente
-  let nome = prompt("Nome do pet:");
-  let tel = prompt("WhatsApp:");
-  let tutor = prompt("Tutor:");
+  // 🚀 LIVRE → MOSTRA FORM PREMIUM
+  if (status.includes("LIVRE")) {
+
+    document.getElementById("titulo").innerText = "Ativar TAG";
+
+    document.getElementById("conteudo").innerHTML = `
+      <input id="nome" placeholder="Nome do pet">
+      <input id="tel" placeholder="WhatsApp (5584...)">
+      <input id="tutor" placeholder="Nome do tutor">
+
+      <button class="ativar" onclick="ativar()">Ativar agora</button>
+    `;
+  }
+}
+
+async function ativar() {
+
+  let nome = document.getElementById("nome").value;
+  let tel = document.getElementById("tel").value;
+  let tutor = document.getElementById("tutor").value;
 
   if (!nome || !tel) {
-    document.getElementById("status").innerText = "Dados incompletos";
+    alert("Preencha os dados");
     return;
   }
 
-  // 🚀 ativa
+  document.getElementById("titulo").innerText = "🔄 Ativando...";
+
   let ativacao = await fetch(
     API +
     "?id=" + id +
@@ -77,18 +142,19 @@ async function ativarAutomatico() {
     "&tutor=" + encodeURIComponent(tutor)
   );
 
-  let resultado = (await ativacao.text()).replace(/\s/g,"");
+  let resultado = limpar(await ativacao.text());
 
-  if (resultado !== "ATIVADO") {
-    document.getElementById("status").innerText = "Erro ao ativar";
+  if (!resultado.includes("ATIVADO")) {
+    document.getElementById("titulo").innerText = "Erro";
+    document.getElementById("conteudo").innerHTML = "Falha ao ativar";
     return;
   }
 
-  // 🔥 redireciona automático
+  // 🔥 REDIRECIONA
   window.location.href = "/?id=" + id;
 }
 
-ativarAutomatico();
+iniciar();
 
 </script>
 
