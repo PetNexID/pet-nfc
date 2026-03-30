@@ -69,7 +69,6 @@ button:hover {
   font-size: 12px;
   color: #ccc;
   user-select: none;
-  letter-spacing: 0.5px;
 }
 
 #status {
@@ -90,7 +89,6 @@ button:hover {
 }
 
 </style>
-
 </head>
 
 <body>
@@ -125,15 +123,11 @@ let linkGerado = "";
 /* 🔒 BLOQUEIO BÁSICO */
 document.addEventListener("contextmenu", e => e.preventDefault());
 
-/* 🔒 TRUNCAR LINK */
 function truncarLink(url) {
   if (url.length <= 40) return url;
-  let inicio = url.substring(0, 25);
-  let fim = url.substring(url.length - 10);
-  return inicio + "..." + fim;
+  return url.substring(0, 25) + "..." + url.substring(url.length - 10);
 }
 
-/* ⏱ DATA */
 function formatarDataHora() {
   let agora = new Date();
   return agora.toLocaleDateString('pt-BR') + " " + agora.toLocaleTimeString('pt-BR');
@@ -141,79 +135,90 @@ function formatarDataHora() {
 
 async function gerar() {
 
-  let tag = document.getElementById("tag").value.trim();
-  let nome = document.getElementById("nome").value.trim();
-  let tel = document.getElementById("tel").value.trim();
-  let tutor = document.getElementById("tutor").value.trim();
+  try {
 
-  if (!tag || !nome || !tel) {
-    alert("Preencha todos os campos");
-    return;
-  }
+    let tag = document.getElementById("tag").value.trim();
+    let nome = document.getElementById("nome").value.trim();
+    let tel = document.getElementById("tel").value.trim();
+    let tutor = document.getElementById("tutor").value.trim();
 
-  document.getElementById("status").innerText = "🔍 Validando TAG...";
+    if (!tag || !nome || !tel) {
+      alert("Preencha todos os campos");
+      return;
+    }
 
-  let baseApi = "https://script.google.com/macros/s/AKfycbzXAwe57c7S4Tb-grelIKpu-EsDuylH8VVzvVTZ_EYkYScSxNnzrLVIKMU-1ltPLIdw/exec";
+    document.getElementById("status").innerText = "🔍 Validando TAG...";
 
-  let res = await fetch(baseApi + "?id=" + tag);
-  let status = await res.text();
+    let baseApi = "https://script.google.com/macros/s/AKfycbzXAwe57c7S4Tb-grelIKpu-EsDuylH8VVzvVTZ_EYkYScSxNnzrLVIKMU-1ltPLIdw/exec";
 
-  if (status == "NAO_EXISTE") {
-    document.getElementById("status").innerText = "❌ TAG inválida";
-    return;
-  }
+    // 🔥 VALIDAÇÃO
+    let res = await fetch(baseApi + "?id=" + encodeURIComponent(tag));
+    let status = await res.text();
 
-  if (status == "USADO") {
-    document.getElementById("status").innerText = "⚠️ TAG já utilizada";
-    return;
-  }
+    if (status === "NAO_EXISTE") {
+      document.getElementById("status").innerText = "❌ TAG inválida";
+      return;
+    }
 
-  document.getElementById("status").innerText = "💾 Ativando TAG...";
+    if (status === "USADO") {
+      document.getElementById("status").innerText = "⚠️ TAG já utilizada";
+      return;
+    }
 
-  let dataHora = formatarDataHora();
+    document.getElementById("status").innerText = "💾 Ativando TAG...";
 
-  let ativacao = await fetch(
-    baseApi +
-    "?id=" + tag +
-    "&nome=" + encodeURIComponent(nome) +
-    "&tel=" + tel +
-    "&tutor=" + encodeURIComponent(tutor) +
-    "&hora=" + encodeURIComponent(dataHora)
-  );
+    let dataHora = formatarDataHora();
 
-  let resultado = await ativacao.text();
+    // 🔥 ATIVAÇÃO
+    let ativacao = await fetch(
+      baseApi +
+      "?id=" + encodeURIComponent(tag) +
+      "&nome=" + encodeURIComponent(nome) +
+      "&tel=" + encodeURIComponent(tel) +
+      "&tutor=" + encodeURIComponent(tutor) +
+      "&hora=" + encodeURIComponent(dataHora)
+    );
 
-  if (!resultado.startsWith("ATIVADO")) {
+    let resultado = await ativacao.text();
+
+    if (!resultado || !resultado.startsWith("ATIVADO")) {
+      throw new Error("Falha na ativação");
+    }
+
+    let token = resultado.split("|")[1];
+
+    if (!token) {
+      throw new Error("Token inválido");
+    }
+
+    let tokenSeguro = encodeURIComponent(token);
+
+    let base = "https://pet-nfc-pi.vercel.app/";
+
+    linkGerado = base + "?t=" + tokenSeguro;
+
+    document.getElementById("status").innerText = "✅ TAG ativada com sucesso";
+    document.getElementById("hora").innerText = "🕒 Ativado em: " + dataHora;
+    document.getElementById("link").innerText = truncarLink(linkGerado);
+
+  } catch (erro) {
+
+    console.error(erro);
     document.getElementById("status").innerText = "❌ Erro ao ativar";
-    return;
   }
-
-  // 🔐 TOKEN EXTRAÍDO
-  let token = resultado.split("|")[1];
-
-  // 🔥 IMPORTANTE (evita bug no index)
-  let tokenSeguro = encodeURIComponent(token);
-
-  let base = "https://pet-nfc-pi.vercel.app/";
-
-  linkGerado = base + "?t=" + tokenSeguro;
-
-  document.getElementById("status").innerText = "✅ TAG ativada com sucesso";
-  document.getElementById("hora").innerText = "🕒 Ativado em: " + dataHora;
-
-  // 🔒 EXIBE TRUNCADO
-  document.getElementById("link").innerText = truncarLink(linkGerado);
 }
 
 function copiar() {
   if (!linkGerado) return alert("Gere primeiro");
   navigator.clipboard.writeText(linkGerado);
-  alert("✅ Link copiado para gravação NFC");
+  alert("✅ Link copiado");
 }
 
 function testar() {
   if (!linkGerado) return alert("Gere primeiro");
-  window.open(linkGerado, "_blank");
+
+  // 🔥 ABERTURA SEGURA
+  window.open(linkGerado, "_blank", "noopener,noreferrer");
 }
 
 </script>
