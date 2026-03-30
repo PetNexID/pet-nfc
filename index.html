@@ -2,91 +2,56 @@
 
 let telefone = "";
 
-/* 🚀 CACHE */
-function salvarCache(token, dados) {
-  localStorage.setItem("pet_" + token, JSON.stringify(dados));
-}
-
-function pegarCache(token) {
-  let dados = localStorage.getItem("pet_" + token);
-  return dados ? JSON.parse(dados) : null;
-}
-
-/* ⚡ UI RÁPIDA */
-function renderizar(dados) {
-  document.getElementById("nome").innerText = "🐶 " + dados.nome;
-  document.getElementById("tutor").innerText = dados.tutor;
-  telefone = dados.tel;
-}
-
-/* 🔥 CARREGAMENTO OTIMIZADO */
 async function carregar() {
-
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get("t");
-
-  if (!token) {
-    document.body.innerHTML = "<h2 style='color:white'>Link inválido</h2>";
-    return;
-  }
-
-  // 🚀 1. TENTA CACHE (instantâneo)
-  let cache = pegarCache(token);
-  if (cache) {
-    renderizar(cache);
-  }
 
   try {
 
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    if (!id) {
+      document.body.innerHTML = "<h2 style='color:white'>Link inválido</h2>";
+      return;
+    }
+
     let api = "https://script.google.com/macros/s/AKfycbzXAwe57c7S4Tb-grelIKpu-EsDuylH8VVzvVTZ_EYkYScSxNnzrLVIKMU-1ltPLIdw/exec";
 
-    // ⏱ timeout de segurança
-    let controller = new AbortController();
-    setTimeout(() => controller.abort(), 4000);
-
-    let res = await fetch(api + "?t=" + token, {
-      signal: controller.signal
-    });
-
+    let res = await fetch(api + "?id=" + id);
     let texto = await res.text();
 
-    if (texto === "INVALIDO") throw new Error();
+    if (texto === "INVALIDO") {
+      document.body.innerHTML = "<h2 style='color:white'>Tag inválida</h2>";
+      return;
+    }
 
     let dados = JSON.parse(texto);
 
-    // 🔥 atualiza UI
-    renderizar(dados);
+    document.getElementById("nome").innerText = "🐶 " + dados.nome;
+    document.getElementById("tutor").innerText = dados.tutor;
 
-    // 💾 salva cache
-    salvarCache(token, dados);
+    telefone = dados.tel;
 
-  } catch (erro) {
-
-    // ⚠️ só mostra erro se NÃO tiver cache
-    if (!cache) {
-      document.body.innerHTML = "<h2 style='color:white'>Erro ao carregar</h2>";
-    }
-
-    console.log("Fallback cache usado");
+  } catch (e) {
+    document.body.innerHTML = "<h2 style='color:white'>Erro ao carregar</h2>";
   }
 }
 
 carregar();
 
-/* WHATS */
 function enviar() {
   if (!telefone) return;
 
   navigator.geolocation.getCurrentPosition(pos => {
+
     let maps = "https://www.google.com/maps?q=" + pos.coords.latitude + "," + pos.coords.longitude;
 
     let msg = encodeURIComponent("🐶 Encontrei o pet!\n📍 " + maps);
 
     window.location.href = "https://wa.me/" + telefone + "?text=" + msg;
+
   });
 }
 
-/* LIGAR */
 function ligar() {
   if (!telefone) return;
   window.location.href = "tel:" + telefone;
