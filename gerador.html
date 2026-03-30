@@ -66,7 +66,8 @@ button:hover {
 
 #status {
   margin-top: 10px;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: bold;
 }
 
 #hora {
@@ -120,13 +121,13 @@ button:hover {
 
 let linkGerado = "";
 
-/* 🔒 link truncado */
+// 🔒 Exibição truncada
 function truncarLink(url) {
   if (url.length <= 40) return url;
   return url.substring(0, 25) + "..." + url.substring(url.length - 10);
 }
 
-/* 🕒 data */
+// 🕒 Data/hora
 function formatarDataHora() {
   return new Date().toLocaleString('pt-BR');
 }
@@ -137,7 +138,7 @@ async function gerar() {
 
   try {
 
-    let tag = document.getElementById("tag").value.trim();
+    let tag = document.getElementById("tag").value.trim().toUpperCase();
     let nome = document.getElementById("nome").value.trim();
     let tel = document.getElementById("tel").value.trim();
     let tutor = document.getElementById("tutor").value.trim();
@@ -149,23 +150,26 @@ async function gerar() {
 
     statusUI.innerText = "🔍 Verificando TAG...";
 
-    const API = "https://script.google.com/macros/s/AKfycbyg3Krpv37lJVD_KhyQ6qng6UwnSIZ_XMK60cPTeRs5ERumJj1rM_Ue62lYC6zGohfT/exec";
+    const API = "https://script.google.com/macros/s/AKfycbww_8i3tmo0RTu_q5FCvQl1Q5O5-NDt4yAQ9pigX9Hsb-WCzO4x6qJFCoh3JwB5F3I8/exec";
 
-    // 🔎 valida
+    // 🔎 validação
     let res = await fetch(API + "?id=" + encodeURIComponent(tag));
     let status = (await res.text()).trim().toUpperCase();
 
     console.log("STATUS:", status);
 
-    // 🚫 TAG USADA
+    if (status === "NAO_EXISTE") {
+      statusUI.innerText = "❌ TAG NÃO EXISTE";
+      return;
+    }
+
     if (status === "USADO") {
       statusUI.innerText = "🚫 TAG USADA";
       return;
     }
 
-    // ❌ TAG NÃO EXISTE
-    if (status !== "LIVRE" && status !== "USADO") {
-      statusUI.innerText = "❌ TAG NÃO EXISTE";
+    if (status !== "LIVRE") {
+      statusUI.innerText = "❌ ERRO NA VALIDAÇÃO";
       return;
     }
 
@@ -173,7 +177,7 @@ async function gerar() {
 
     let dataHora = formatarDataHora();
 
-    // 🔥 ativa
+    // 🔥 ativação
     let ativacao = await fetch(
       API +
       "?id=" + tag +
@@ -202,19 +206,19 @@ async function gerar() {
   } catch (erro) {
 
     console.error("ERRO:", erro);
-
     statusUI.innerText = "❌ Erro de conexão";
   }
 }
 
-/* 📋 copiar link completo */
+// 📋 copiar link completo
 function copiar() {
   if (!linkGerado) return alert("Gere primeiro");
+
   navigator.clipboard.writeText(linkGerado);
-  alert("✅ Link copiado!");
+  alert("✅ Link copiado completo!");
 }
 
-/* 🔍 testar */
+// 🔍 testar
 function testar() {
   if (!linkGerado) return alert("Gere primeiro");
   window.open(linkGerado, "_blank");
