@@ -1,141 +1,73 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>PetNex ID</title>
-
-<style>
-
-body {
-  margin: 0;
-  height: 100vh;
-  font-family: 'Segoe UI', Arial;
-  background: radial-gradient(circle at top, #1c3b34, #0b1c22 70%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.card {
-  background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(18px);
-  border-radius: 22px;
-  padding: 25px;
-  width: 90%;
-  max-width: 360px;
-  text-align: center;
-  color: white;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-}
-
-.logo {
-  width: 150px;
-  margin-bottom: 10px;
-}
-
-.status {
-  background: red;
-  padding: 6px;
-  border-radius: 8px;
-  font-size: 12px;
-  margin-bottom: 10px;
-}
-
-h1 {
-  margin: 10px 0;
-}
-
-.tutor-box {
-  background: rgba(255,255,255,0.08);
-  padding: 10px;
-  border-radius: 12px;
-  margin-bottom: 15px;
-}
-
-button {
-  width: 100%;
-  padding: 15px;
-  margin-top: 10px;
-  border: none;
-  border-radius: 14px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.whats {
-  background: #00ffb3;
-}
-
-.ligar {
-  background: #ff7e5f;
-}
-
-.footer {
-  margin-top: 15px;
-  font-size: 11px;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="card">
-
-<img src="Logo.png" class="logo">
-
-<div class="status">🚨 PET PERDIDO</div>
-
-<h1 id="nome">Carregando...</h1>
-
-<div class="tutor-box">
-Tutor: <strong id="tutor">---</strong>
-</div>
-
-<button class="whats" onclick="enviar()">📍 WhatsApp</button>
-<button class="ligar" onclick="ligar()">📞 Ligar</button>
-
-<div class="footer">PetNex ID</div>
-
-</div>
-
 <script>
 
 let telefone = "";
 
-/* 🔥 CARREGAMENTO */
+/* 🚀 CACHE */
+function salvarCache(token, dados) {
+  localStorage.setItem("pet_" + token, JSON.stringify(dados));
+}
+
+function pegarCache(token) {
+  let dados = localStorage.getItem("pet_" + token);
+  return dados ? JSON.parse(dados) : null;
+}
+
+/* ⚡ UI RÁPIDA */
+function renderizar(dados) {
+  document.getElementById("nome").innerText = "🐶 " + dados.nome;
+  document.getElementById("tutor").innerText = dados.tutor;
+  telefone = dados.tel;
+}
+
+/* 🔥 CARREGAMENTO OTIMIZADO */
 async function carregar() {
+
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("t");
+
+  if (!token) {
+    document.body.innerHTML = "<h2 style='color:white'>Link inválido</h2>";
+    return;
+  }
+
+  // 🚀 1. TENTA CACHE (instantâneo)
+  let cache = pegarCache(token);
+  if (cache) {
+    renderizar(cache);
+  }
 
   try {
 
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("t");
-
-    if (!token) throw new Error("Sem token");
-
     let api = "https://script.google.com/macros/s/AKfycbzXAwe57c7S4Tb-grelIKpu-EsDuylH8VVzvVTZ_EYkYScSxNnzrLVIKMU-1ltPLIdw/exec";
 
-    let res = await fetch(api + "?t=" + token);
+    // ⏱ timeout de segurança
+    let controller = new AbortController();
+    setTimeout(() => controller.abort(), 4000);
+
+    let res = await fetch(api + "?t=" + token, {
+      signal: controller.signal
+    });
 
     let texto = await res.text();
 
-    if (texto === "INVALIDO") throw new Error("Token inválido");
+    if (texto === "INVALIDO") throw new Error();
 
     let dados = JSON.parse(texto);
 
-    document.getElementById("nome").innerText = "🐶 " + dados.nome;
-    document.getElementById("tutor").innerText = dados.tutor;
+    // 🔥 atualiza UI
+    renderizar(dados);
 
-    telefone = dados.tel;
+    // 💾 salva cache
+    salvarCache(token, dados);
 
   } catch (erro) {
 
-    document.body.innerHTML = "<h2 style='color:white'>Erro ao carregar</h2>";
-    console.error(erro);
+    // ⚠️ só mostra erro se NÃO tiver cache
+    if (!cache) {
+      document.body.innerHTML = "<h2 style='color:white'>Erro ao carregar</h2>";
+    }
+
+    console.log("Fallback cache usado");
   }
 }
 
@@ -143,19 +75,15 @@ carregar();
 
 /* WHATS */
 function enviar() {
-
   if (!telefone) return;
 
   navigator.geolocation.getCurrentPosition(pos => {
-
     let maps = "https://www.google.com/maps?q=" + pos.coords.latitude + "," + pos.coords.longitude;
 
     let msg = encodeURIComponent("🐶 Encontrei o pet!\n📍 " + maps);
 
     window.location.href = "https://wa.me/" + telefone + "?text=" + msg;
-
   });
-
 }
 
 /* LIGAR */
@@ -165,6 +93,3 @@ function ligar() {
 }
 
 </script>
-
-</body>
-</html>
