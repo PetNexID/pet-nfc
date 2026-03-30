@@ -33,7 +33,7 @@ body {
 .Logo {
   width: 160px;
   margin-bottom: 10px;
-  filter: drop-shadow(0 0 10px rgba(0,255,180,0.3));
+  filter: drop-shadow(0 0 12px rgba(0,255,180,0.4));
 }
 
 input {
@@ -53,6 +53,11 @@ button {
   border-radius: 14px;
   font-weight: bold;
   cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: scale(1.04);
 }
 
 .gerar { background: linear-gradient(45deg,#00c6ff,#0072ff); color:white; }
@@ -64,6 +69,7 @@ button {
   font-size: 12px;
   color: #ccc;
   user-select: none;
+  letter-spacing: 0.5px;
 }
 
 #status {
@@ -116,7 +122,10 @@ button {
 
 let linkGerado = "";
 
-// 🔒 truncar link (anti-pirataria)
+/* 🔒 BLOQUEIO BÁSICO */
+document.addEventListener("contextmenu", e => e.preventDefault());
+
+/* 🔒 TRUNCAR LINK */
 function truncarLink(url) {
   if (url.length <= 40) return url;
   let inicio = url.substring(0, 25);
@@ -124,6 +133,7 @@ function truncarLink(url) {
   return inicio + "..." + fim;
 }
 
+/* ⏱ DATA */
 function formatarDataHora() {
   let agora = new Date();
   return agora.toLocaleDateString('pt-BR') + " " + agora.toLocaleTimeString('pt-BR');
@@ -173,36 +183,37 @@ async function gerar() {
 
   let resultado = await ativacao.text();
 
-  // 🔥 valida resposta com token
   if (!resultado.startsWith("ATIVADO")) {
-    document.getElementById("status").innerText = "Erro ao ativar";
+    document.getElementById("status").innerText = "❌ Erro ao ativar";
     return;
   }
 
-  // 🔐 extrai token
+  // 🔐 TOKEN EXTRAÍDO
   let token = resultado.split("|")[1];
+
+  // 🔥 IMPORTANTE (evita bug no index)
+  let tokenSeguro = encodeURIComponent(token);
+
+  let base = "https://pet-nfc-pi.vercel.app/";
+
+  linkGerado = base + "?t=" + tokenSeguro;
 
   document.getElementById("status").innerText = "✅ TAG ativada com sucesso";
   document.getElementById("hora").innerText = "🕒 Ativado em: " + dataHora;
 
-  let base = "https://pet-nfc-pi.vercel.app/";
-
-  // 🔐 link criptografado
-  linkGerado = base + "?t=" + token;
-
-  // 🔒 mostra truncado
+  // 🔒 EXIBE TRUNCADO
   document.getElementById("link").innerText = truncarLink(linkGerado);
 }
 
 function copiar() {
   if (!linkGerado) return alert("Gere primeiro");
   navigator.clipboard.writeText(linkGerado);
-  alert("Link copiado!");
+  alert("✅ Link copiado para gravação NFC");
 }
 
 function testar() {
   if (!linkGerado) return alert("Gere primeiro");
-  window.open(linkGerado);
+  window.open(linkGerado, "_blank");
 }
 
 </script>
