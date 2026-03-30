@@ -120,7 +120,7 @@ button:hover {
 
 let linkGerado = "";
 
-/* 🔒 BLOQUEIO BÁSICO */
+/* 🔒 bloqueio básico */
 document.addEventListener("contextmenu", e => e.preventDefault());
 
 function truncarLink(url) {
@@ -151,7 +151,7 @@ async function gerar() {
 
     let baseApi = "https://script.google.com/macros/s/AKfycbww_8i3tmo0RTu_q5FCvQl1Q5O5-NDt4yAQ9pigX9Hsb-WCzO4x6qJFCoh3JwB5F3I8/exec";
 
-    // 🔥 VALIDAÇÃO
+    // 🔎 valida
     let res = await fetch(baseApi + "?id=" + encodeURIComponent(tag));
     let status = await res.text();
 
@@ -169,7 +169,7 @@ async function gerar() {
 
     let dataHora = formatarDataHora();
 
-    // 🔥 ATIVAÇÃO
+    // 🔥 ativa
     let ativacao = await fetch(
       baseApi +
       "?id=" + encodeURIComponent(tag) +
@@ -181,28 +181,19 @@ async function gerar() {
 
     let resultado = await ativacao.text();
 
-    if (!resultado || !resultado.startsWith("ATIVADO")) {
-      throw new Error("Falha na ativação");
+    if (resultado !== "ATIVADO") {
+      throw new Error("Erro na ativação");
     }
 
-    let token = resultado.split("|")[1];
-
-    if (!token) {
-      throw new Error("Token inválido");
-    }
-
-    let tokenSeguro = encodeURIComponent(token);
-
+    // ✅ LINK NOVO (SEM TOKEN)
     let base = "https://pet-nfc-pi.vercel.app/";
-
-    linkGerado = base + "?t=" + tokenSeguro;
+    linkGerado = base + "?id=" + encodeURIComponent(tag);
 
     document.getElementById("status").innerText = "✅ TAG ativada com sucesso";
     document.getElementById("hora").innerText = "🕒 Ativado em: " + dataHora;
     document.getElementById("link").innerText = truncarLink(linkGerado);
 
   } catch (erro) {
-
     console.error(erro);
     document.getElementById("status").innerText = "❌ Erro ao ativar";
   }
@@ -216,9 +207,7 @@ function copiar() {
 
 function testar() {
   if (!linkGerado) return alert("Gere primeiro");
-
-  // 🔥 ABERTURA SEGURA
-  window.open(linkGerado, "_blank", "noopener,noreferrer");
+  window.open(linkGerado, "_blank");
 }
 
 </script>
