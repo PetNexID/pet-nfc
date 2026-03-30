@@ -9,7 +9,6 @@
 
 <style>
 
-/* FUNDO PREMIUM */
 body {
   margin: 0;
   height: 100vh;
@@ -20,7 +19,6 @@ body {
   justify-content: center;
 }
 
-/* CARD */
 .card {
   background: rgba(255,255,255,0.06);
   backdrop-filter: blur(18px);
@@ -33,14 +31,11 @@ body {
   box-shadow: 0 20px 60px rgba(0,0,0,0.6);
 }
 
-/* LOGO */
 .logo {
   width: 150px;
   margin-bottom: 10px;
-  filter: drop-shadow(0 0 10px rgba(0,255,180,0.3));
 }
 
-/* STATUS */
 .status {
   background: linear-gradient(45deg, #ff4d4d, #ff0000);
   padding: 6px;
@@ -49,25 +44,17 @@ body {
   margin-bottom: 10px;
 }
 
-/* TITULO */
-h1 {
-  margin: 10px 0;
-}
-
-/* TUTOR DESTACADO */
 .tutor-box {
   background: rgba(255,255,255,0.08);
   padding: 10px;
   border-radius: 12px;
   margin-bottom: 15px;
-  font-size: 14px;
 }
 
 .tutor-box strong {
   color: #00ffb3;
 }
 
-/* BOTÕES */
 button {
   width: 100%;
   padding: 15px;
@@ -76,26 +63,16 @@ button {
   border-radius: 14px;
   font-weight: bold;
   cursor: pointer;
-  font-size: 15px;
-  transition: 0.2s;
 }
 
-button:hover {
-  transform: scale(1.05);
-}
-
-/* CORES */
 .whats {
-  background: linear-gradient(45deg, #00ffb3, #00c6ff);
-  color: #003333;
+  background: linear-gradient(45deg,#00ffb3,#00c6ff);
 }
 
 .ligar {
-  background: linear-gradient(45deg, #ff7e5f, #ffb88c);
-  color: #4a1a00;
+  background: linear-gradient(45deg,#ff7e5f,#ffb88c);
 }
 
-/* RODAPÉ */
 .footer {
   margin-top: 15px;
   font-size: 11px;
@@ -114,20 +91,14 @@ button:hover {
 
 <div class="status">🚨 PET PERDIDO</div>
 
-<h1 id="nome">🐶 Pet</h1>
+<h1 id="nome">Carregando...</h1>
 
-<!-- 🔥 TUTOR DESTACADO -->
 <div class="tutor-box">
 Tutor: <strong id="tutor">---</strong>
 </div>
 
-<button class="whats" onclick="enviar()">
-📍 Avisar dono via WhatsApp
-</button>
-
-<button class="ligar" onclick="ligar()">
-📞 Ligar para o dono
-</button>
+<button class="whats" onclick="enviar()">📍 Avisar dono via WhatsApp</button>
+<button class="ligar" onclick="ligar()">📞 Ligar para o dono</button>
 
 <div class="footer">PetNex ID • Tecnologia para pets</div>
 
@@ -135,44 +106,68 @@ Tutor: <strong id="tutor">---</strong>
 
 <script>
 
+let telefone = "";
+let nomePet = "";
+
+// 🔐 pega token
 const params = new URLSearchParams(window.location.search);
+const token = params.get("t");
 
-const nome = params.get("nome") || "Pet";
-const telefone = params.get("tel") || "558499999999";
-const tutor = params.get("tutor") || "Não informado";
+// 🚫 bloqueia acesso inválido
+if (!token) {
+  document.body.innerHTML = "<h2 style='color:white'>Acesso inválido</h2>";
+  throw new Error("Sem token");
+}
 
-/* INSERE DADOS */
-document.getElementById("nome").innerText = "🐶 " + nome;
-document.getElementById("tutor").innerText = tutor;
+// 🔥 SUA API
+const API = "https://script.google.com/macros/s/AKfycbx9rrb6f3E__M34HaZaY-HASOqwPDJuY2xuNW8gccA0wBYBdRF5GWPvd5ZQlxxx9OyO/exec";
 
-/* WHATS COM LOCALIZAÇÃO */
+// 🔐 busca dados do servidor
+fetch(API + "?t=" + token)
+  .then(res => res.text())
+  .then(data => {
+
+    if (data === "INVALIDO") {
+      document.body.innerHTML = "<h2 style='color:white'>Tag inválida</h2>";
+      return;
+    }
+
+    let obj = JSON.parse(data);
+
+    nomePet = obj.nome;
+    telefone = obj.tel;
+
+    document.getElementById("nome").innerText = "🐶 " + obj.nome;
+    document.getElementById("tutor").innerText = obj.tutor;
+
+  })
+  .catch(() => {
+    document.body.innerHTML = "<h2 style='color:white'>Erro ao carregar</h2>";
+  });
+
+// 📍 Whats com localização
 function enviar() {
 
-  if (!navigator.geolocation) {
-    alert("Seu dispositivo não suporta localização");
-    return;
-  }
+  if (!telefone) return alert("Carregando dados...");
 
   navigator.geolocation.getCurrentPosition((pos) => {
 
-    let lat = pos.coords.latitude;
-    let lng = pos.coords.longitude;
+    let maps = "https://www.google.com/maps?q=" + pos.coords.latitude + "," + pos.coords.longitude;
 
-    let maps = "https://www.google.com/maps?q=" + lat + "," + lng;
-
-    let mensagem = encodeURIComponent(
-      "🐶 Encontrei " + nome + "!\n📍 Localização: " + maps
+    let msg = encodeURIComponent(
+      "🐶 Encontrei " + nomePet + "!\n📍 Localização: " + maps
     );
 
-    window.location.href = "https://wa.me/" + telefone + "?text=" + mensagem;
+    window.location.href = "https://wa.me/" + telefone + "?text=" + msg;
 
   }, () => {
     alert("Ative a localização");
   });
 }
 
-/* LIGAR */
+// 📞 ligar
 function ligar() {
+  if (!telefone) return alert("Carregando dados...");
   window.location.href = "tel:" + telefone;
 }
 
