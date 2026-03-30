@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -37,11 +37,15 @@ body {
 }
 
 .status {
-  background: linear-gradient(45deg, #ff4d4d, #ff0000);
+  background: red;
   padding: 6px;
   border-radius: 8px;
   font-size: 12px;
   margin-bottom: 10px;
+}
+
+h1 {
+  margin: 10px 0;
 }
 
 .tutor-box {
@@ -49,10 +53,6 @@ body {
   padding: 10px;
   border-radius: 12px;
   margin-bottom: 15px;
-}
-
-.tutor-box strong {
-  color: #00ffb3;
 }
 
 button {
@@ -66,17 +66,16 @@ button {
 }
 
 .whats {
-  background: linear-gradient(45deg,#00ffb3,#00c6ff);
+  background: #00ffb3;
 }
 
 .ligar {
-  background: linear-gradient(45deg,#ff7e5f,#ffb88c);
+  background: #ff7e5f;
 }
 
 .footer {
   margin-top: 15px;
   font-size: 11px;
-  opacity: 0.6;
 }
 
 </style>
@@ -97,77 +96,71 @@ button {
 Tutor: <strong id="tutor">---</strong>
 </div>
 
-<button class="whats" onclick="enviar()">📍 Avisar dono via WhatsApp</button>
-<button class="ligar" onclick="ligar()">📞 Ligar para o dono</button>
+<button class="whats" onclick="enviar()">📍 WhatsApp</button>
+<button class="ligar" onclick="ligar()">📞 Ligar</button>
 
-<div class="footer">PetNex ID • Tecnologia para pets</div>
+<div class="footer">PetNex ID</div>
 
 </div>
 
 <script>
 
 let telefone = "";
-let nomePet = "";
 
-// 🔐 pega token
-const params = new URLSearchParams(window.location.search);
-const token = params.get("t");
+/* 🔥 CARREGAMENTO */
+async function carregar() {
 
-// 🚫 bloqueia acesso inválido
-if (!token) {
-  document.body.innerHTML = "<h2 style='color:white'>Acesso inválido</h2>";
-  throw new Error("Sem token");
+  try {
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("t");
+
+    if (!token) throw new Error("Sem token");
+
+    let api = "https://script.google.com/macros/s/AKfycbzXAwe57c7S4Tb-grelIKpu-EsDuylH8VVzvVTZ_EYkYScSxNnzrLVIKMU-1ltPLIdw/exec";
+
+    let res = await fetch(api + "?t=" + token);
+
+    let texto = await res.text();
+
+    if (texto === "INVALIDO") throw new Error("Token inválido");
+
+    let dados = JSON.parse(texto);
+
+    document.getElementById("nome").innerText = "🐶 " + dados.nome;
+    document.getElementById("tutor").innerText = dados.tutor;
+
+    telefone = dados.tel;
+
+  } catch (erro) {
+
+    document.body.innerHTML = "<h2 style='color:white'>Erro ao carregar</h2>";
+    console.error(erro);
+  }
 }
 
-// 🔥 SUA API
-const API = "https://script.google.com/macros/s/AKfycbx9rrb6f3E__M34HaZaY-HASOqwPDJuY2xuNW8gccA0wBYBdRF5GWPvd5ZQlxxx9OyO/exec";
+carregar();
 
-// 🔐 busca dados do servidor
-fetch(API + "?t=" + token)
-  .then(res => res.text())
-  .then(data => {
-
-    if (data === "INVALIDO") {
-      document.body.innerHTML = "<h2 style='color:white'>Tag inválida</h2>";
-      return;
-    }
-
-    let obj = JSON.parse(data);
-
-    nomePet = obj.nome;
-    telefone = obj.tel;
-
-    document.getElementById("nome").innerText = "🐶 " + obj.nome;
-    document.getElementById("tutor").innerText = obj.tutor;
-
-  })
-  .catch(() => {
-    document.body.innerHTML = "<h2 style='color:white'>Erro ao carregar</h2>";
-  });
-
-// 📍 Whats com localização
+/* WHATS */
 function enviar() {
 
-  if (!telefone) return alert("Carregando dados...");
+  if (!telefone) return;
 
-  navigator.geolocation.getCurrentPosition((pos) => {
+  navigator.geolocation.getCurrentPosition(pos => {
 
     let maps = "https://www.google.com/maps?q=" + pos.coords.latitude + "," + pos.coords.longitude;
 
-    let msg = encodeURIComponent(
-      "🐶 Encontrei " + nomePet + "!\n📍 Localização: " + maps
-    );
+    let msg = encodeURIComponent("🐶 Encontrei o pet!\n📍 " + maps);
 
     window.location.href = "https://wa.me/" + telefone + "?text=" + msg;
 
-  }, () => {
-    alert("Ative a localização");
   });
+
 }
 
-// 📞 ligar
+/* LIGAR */
 function ligar() {
-  if (!telefone) return alert("Carregando dados...");
+  if (!telefone) return;
   window.location.href = "tel:" + telefone;
 }
 
