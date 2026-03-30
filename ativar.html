@@ -30,7 +30,7 @@ body {
 
 <script>
 
-const API = "https://script.google.com/macros/s/AKfycbzmTjnKrREVF3pBZYlFiHKAr74RPnpGwVbOqBA5B4kc45EaFSqefjGc51Jc3KOrsKBH/exec";
+const API = "COLE_AQUI_SUA_URL_NOVA";
 
 const params = new URLSearchParams(window.location.search);
 const id = (params.get("id") || "").toUpperCase().trim();
@@ -44,16 +44,17 @@ async function ativarAutomatico() {
 
   try {
 
+    // 🔎 CONSULTA
     let res = await fetch(API + "?id=" + id);
     let raw = await res.text();
 
     console.log("RAW:", raw);
 
-    // 🔥 DETECTA JSON (TAG JÁ ATIVA)
+    // 🔥 Se vier JSON → já está ativa
     if (raw.startsWith("{")) {
 
       setTitulo("TAG já ativada");
-      setStatus("🐾 Esta TAG já está em uso. Abrindo...");
+      setStatus("🐾 Esta TAG já está em uso. Redirecionando...");
 
       setTimeout(() => {
         window.location.href = "/?id=" + id;
@@ -62,8 +63,7 @@ async function ativarAutomatico() {
       return;
     }
 
-    // 🔥 limpeza padrão
-    let status = raw.replace(/\s/g, "").toUpperCase();
+    let status = raw.trim().toUpperCase();
 
     // ❌ não existe
     if (status === "NAO_EXISTE") {
@@ -72,7 +72,20 @@ async function ativarAutomatico() {
       return;
     }
 
-    // 🟢 LIVRE → ativar
+    // 🔥 já usada (fallback extra)
+    if (status === "USADO") {
+
+      setTitulo("TAG já ativada");
+      setStatus("🐾 Esta TAG já está em uso. Redirecionando...");
+
+      setTimeout(() => {
+        window.location.href = "/?id=" + id;
+      }, 2000);
+
+      return;
+    }
+
+    // 🟢 LIVRE → ativação
     if (status === "LIVRE") {
 
       setTitulo("Ativação necessária");
@@ -98,11 +111,13 @@ async function ativarAutomatico() {
       );
 
       let rawAtivacao = await ativacao.text();
-      let resultado = rawAtivacao.replace(/\s/g, "").toUpperCase();
 
-      console.log("ATIVACAO:", resultado);
+      let resultado = rawAtivacao.trim().toUpperCase();
 
-      if (resultado !== "ATIVADO") {
+      console.log("RESULTADO:", resultado);
+
+      // 🔥 CORREÇÃO AQUI
+      if (!resultado.includes("ATIVADO")) {
         setStatus("❌ Erro ao ativar");
         return;
       }
@@ -116,7 +131,7 @@ async function ativarAutomatico() {
       return;
     }
 
-    // fallback real
+    // fallback
     setStatus("Erro inesperado: " + raw);
 
   } catch (err) {
