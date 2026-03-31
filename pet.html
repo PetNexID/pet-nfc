@@ -25,6 +25,8 @@
     }
 
     .logo {
+      width: 200px;
+      max-width: 90%;
       margin-bottom: 15px;
     }
 
@@ -54,11 +56,9 @@
       padding: 14px;
       width: 90%;
       border-radius: 12px;
-      border: none;
       font-size: 16px;
       text-decoration: none;
       color: white;
-      cursor: pointer;
     }
 
     .whatsapp {
@@ -80,9 +80,9 @@
 <body>
 
 <div class="card">
-  <img src="Logo.png" width="200" class="logo">
+  <img src="Logo.png" class="logo">
 
-  <div class="status">🐾 PET PERDIDO 🐾</div>
+  <div class="status">🐾 PET PERDIDO</div>
 
   <h1 id="nome">Carregando...</h1>
 
@@ -91,7 +91,7 @@
   </div>
 
   <a id="whatsapp" class="whatsapp" target="_blank">
-    📍 Avisar e enviar localização via WhatsApp
+    📍 Avisar dono via WhatsApp
   </a>
 
   <a id="ligar" class="ligar">
@@ -115,6 +115,7 @@ const supabaseClient = supabase.createClient(
 );
 
 async function carregar() {
+
   const { data, error } = await supabaseClient
     .from('pets')
     .select('*')
@@ -126,16 +127,22 @@ async function carregar() {
     return;
   }
 
-  if (!data.ativo) {
+  // 🔥 CORREÇÃO DO LOOP
+  const ativadaLocal = localStorage.getItem("tag_ativada_" + codigo);
+
+  if (data.status !== "USADA" && !ativadaLocal) {
     window.location.href = "ativar.html?codigo=" + codigo;
     return;
   }
 
+  // 🔥 LIMPA CACHE LOCAL
+  localStorage.removeItem("tag_ativada_" + codigo);
+
+  // ✅ DADOS
   document.getElementById("nome").innerText = data.nome_pet || "Pet";
+  document.getElementById("tutor").innerText = data.nome_tutor || "Não informado";
 
-  document.getElementById("tutor").innerText =
-    data.nome_tutor || "Não informado";
-
+  // ✅ BOTÕES
   document.getElementById("whatsapp").href =
     "https://wa.me/55" + data.telefone;
 
