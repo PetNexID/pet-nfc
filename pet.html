@@ -48,7 +48,7 @@
       margin: 15px 0;
     }
 
-    a, button {
+    a {
       display: block;
       margin: 12px auto;
       padding: 14px;
@@ -87,7 +87,7 @@
   <h1 id="nome">Carregando...</h1>
 
   <div class="info">
-    Tutor: <span id="telefone">---</span>
+    Tutor: <span id="tutor">---</span>
   </div>
 
   <a id="whatsapp" class="whatsapp" target="_blank">
@@ -131,8 +131,10 @@ async function carregar() {
     return;
   }
 
-  document.getElementById("nome").innerText = data.nome_pet;
-  document.getElementById("telefone").innerText = data.telefone;
+  document.getElementById("nome").innerText = data.nome_pet || "Pet";
+
+  document.getElementById("tutor").innerText =
+    data.nome_tutor || "Não informado";
 
   document.getElementById("whatsapp").href =
     "https://wa.me/55" + data.telefone;
