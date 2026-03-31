@@ -21,12 +21,10 @@ body {
   border-radius: 20px;
   background: rgba(255,255,255,0.05);
   backdrop-filter: blur(10px);
-  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
 }
 
 .logo {
   width: 200px;
-  margin-bottom: 10px;
 }
 
 input {
@@ -35,35 +33,26 @@ input {
   padding: 14px;
   border-radius: 10px;
   border: none;
-  font-size: 16px;
 }
 
 button {
   width: 90%;
-  margin: 10px;
   padding: 14px;
-  border-radius: 12px;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
+  border-radius: 10px;
   background: linear-gradient(90deg,#00c6ff,#0072ff);
   color: white;
+  border: none;
 }
 
 .msg {
-  margin: 15px;
-  padding: 12px;
+  margin: 10px;
+  padding: 10px;
   border-radius: 10px;
   font-weight: bold;
 }
 
-.erro {
-  background: #ff2e2e;
-}
-
-.sucesso {
-  background: #00c851;
-}
+.erro { background: red; }
+.sucesso { background: green; }
 </style>
 </head>
 
@@ -78,10 +67,10 @@ button {
 <div id="mensagem"></div>
 
 <div id="formulario" style="display:none;">
-  <input id="pet" placeholder="Nome do Pet">
-  <input id="tutor" placeholder="Nome do Tutor">
-  <input id="telefone" placeholder="WhatsApp">
-  <button onclick="ativar()">Ativar TAG</button>
+<input id="pet" placeholder="Nome do Pet">
+<input id="tutor" placeholder="Nome do Tutor">
+<input id="telefone" placeholder="WhatsApp">
+<button onclick="ativar()">Ativar TAG</button>
 </div>
 
 </div>
@@ -97,7 +86,17 @@ const supabaseClient = supabase.createClient(
   "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF"
 );
 
-// 🔎 VERIFICA STATUS
+function mostrarJaAtivada() {
+  document.getElementById("mensagem").innerHTML =
+    "<div class='msg sucesso'>✅ TAG JÁ ATIVADA</div>";
+
+  localStorage.setItem("tag_ok_" + codigo, "true");
+
+  setTimeout(() => {
+    window.location.href = "pet.html?codigo=" + codigo;
+  }, 1200);
+}
+
 async function verificar() {
 
   const { data, error } = await supabaseClient
@@ -112,28 +111,17 @@ async function verificar() {
     return;
   }
 
-  // 🔒 JÁ ATIVADA
   if (data.status === "USADA") {
-
-    document.getElementById("mensagem").innerHTML =
-      "<div class='msg sucesso'>✅ TAG JÁ ATIVADA</div>";
-
-    setTimeout(() => {
-      window.location.href = "pet.html?codigo=" + codigo;
-    }, 1500);
-
+    mostrarJaAtivada();
     return;
   }
 
-  // ✅ LIVRE
   document.getElementById("mensagem").innerHTML =
     "<div class='msg'>Preencha os dados para ativar</div>";
 
   document.getElementById("formulario").style.display = "block";
 }
 
-
-// 🚀 ATIVAR COM BLOQUEIO REAL
 async function ativar() {
 
   const nomePet = document.getElementById("pet").value;
@@ -155,29 +143,22 @@ async function ativar() {
       data_cadastro: new Date()
     })
     .eq('codigo_tag', codigo)
-    .eq('status', 'LIVRE') // 🔥 TRAVA DEFINITIVA
+    .eq('status', 'LIVRE')
     .select();
 
-  // 🚨 BLOQUEIO
   if (!data || data.length === 0) {
-
-    document.getElementById("mensagem").innerHTML =
-      "<div class='msg erro'>⚠️ Esta TAG já foi ativada</div>";
-
-    setTimeout(() => {
-      window.location.href = "pet.html?codigo=" + codigo;
-    }, 1500);
-
+    mostrarJaAtivada();
     return;
   }
 
-  // ✅ SUCESSO
+  localStorage.setItem("tag_ok_" + codigo, "true");
+
   document.getElementById("mensagem").innerHTML =
     "<div class='msg sucesso'>🚀 TAG ATIVADA COM SUCESSO</div>";
 
   setTimeout(() => {
     window.location.href = "pet.html?codigo=" + codigo;
-  }, 1500);
+  }, 1200);
 }
 
 verificar();
