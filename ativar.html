@@ -20,7 +20,6 @@ body {
   padding: 25px;
   border-radius: 20px;
   background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(10px);
 }
 
 .logo {
@@ -45,8 +44,8 @@ button {
 }
 
 .msg {
-  margin: 10px;
-  padding: 10px;
+  margin: 15px;
+  padding: 12px;
   border-radius: 10px;
   font-weight: bold;
 }
@@ -67,10 +66,10 @@ button {
 <div id="mensagem"></div>
 
 <div id="formulario" style="display:none;">
-<input id="pet" placeholder="Nome do Pet">
-<input id="tutor" placeholder="Nome do Tutor">
-<input id="telefone" placeholder="WhatsApp">
-<button onclick="ativar()">Ativar TAG</button>
+  <input id="pet" placeholder="Nome do Pet">
+  <input id="tutor" placeholder="Nome do Tutor">
+  <input id="telefone" placeholder="WhatsApp">
+  <button onclick="ativar()">Ativar TAG</button>
 </div>
 
 </div>
@@ -86,17 +85,8 @@ const supabaseClient = supabase.createClient(
   "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF"
 );
 
-function mostrarJaAtivada() {
-  document.getElementById("mensagem").innerHTML =
-    "<div class='msg sucesso'>✅ TAG JÁ ATIVADA</div>";
 
-  localStorage.setItem("tag_ok_" + codigo, "true");
-
-  setTimeout(() => {
-    window.location.href = "pet.html?codigo=" + codigo;
-  }, 1200);
-}
-
+// 🔎 VERIFICA STATUS
 async function verificar() {
 
   const { data, error } = await supabaseClient
@@ -106,22 +96,30 @@ async function verificar() {
     .single();
 
   if (error || !data) {
-    document.getElementById("mensagem").innerHTML =
-      "<div class='msg erro'>TAG NÃO CADASTRADA</div>";
+    mostrarErro("TAG NÃO CADASTRADA");
     return;
   }
 
+  // 🔴 USADA → VAI DIRETO
   if (data.status === "USADA") {
-    mostrarJaAtivada();
+    mostrarSucesso("✅ TAG JÁ ATIVADA");
+
+    setTimeout(() => {
+      window.location.href = "pet.html?codigo=" + codigo;
+    }, 1200);
+
     return;
   }
 
+  // 🟢 LIVRE → FORMULÁRIO
   document.getElementById("mensagem").innerHTML =
-    "<div class='msg'>Preencha os dados para ativar</div>";
+    "<div class='msg'>Preencha para ativar</div>";
 
   document.getElementById("formulario").style.display = "block";
 }
 
+
+// 🚀 ATIVAÇÃO COM CONFIRMAÇÃO REAL
 async function ativar() {
 
   const nomePet = document.getElementById("pet").value;
@@ -133,7 +131,8 @@ async function ativar() {
     return;
   }
 
-  const { data, error } = await supabaseClient
+  // 🔥 ATIVA SOMENTE SE LIVRE
+  const { data } = await supabaseClient
     .from('pets')
     .update({
       nome_pet: nomePet,
@@ -146,19 +145,59 @@ async function ativar() {
     .eq('status', 'LIVRE')
     .select();
 
+  // 🔒 JÁ FOI ATIVADA
   if (!data || data.length === 0) {
-    mostrarJaAtivada();
+    mostrarErro("⚠️ TAG já foi ativada");
+
+    setTimeout(() => {
+      window.location.href = "pet.html?codigo=" + codigo;
+    }, 1200);
+
     return;
   }
 
-  localStorage.setItem("tag_ok_" + codigo, "true");
+  mostrarSucesso("🚀 Ativando...");
 
+  // 🔥 CONFIRMAÇÃO REAL NO BANCO
+  await confirmarBanco();
+
+  // 🔥 SÓ AGORA REDIRECIONA
+  window.location.href = "pet.html?codigo=" + codigo;
+}
+
+
+// 🔥 ESPERA BANCO ATUALIZAR
+async function confirmarBanco() {
+
+  let tentativas = 0;
+
+  while (tentativas < 6) {
+
+    const res = await supabaseClient
+      .from('pets')
+      .select('status')
+      .eq('codigo_tag', codigo)
+      .single();
+
+    if (res.data && res.data.status === "USADA") {
+      return;
+    }
+
+    await new Promise(r => setTimeout(r, 300));
+    tentativas++;
+  }
+}
+
+
+// UI helpers
+function mostrarErro(msg) {
   document.getElementById("mensagem").innerHTML =
-    "<div class='msg sucesso'>🚀 TAG ATIVADA COM SUCESSO</div>";
+    "<div class='msg erro'>" + msg + "</div>";
+}
 
-  setTimeout(() => {
-    window.location.href = "pet.html?codigo=" + codigo;
-  }, 1200);
+function mostrarSucesso(msg) {
+  document.getElementById("mensagem").innerHTML =
+    "<div class='msg sucesso'>" + msg + "</div>";
 }
 
 verificar();
