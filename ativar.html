@@ -29,10 +29,6 @@ body {
   margin-bottom: 10px;
 }
 
-h2 {
-  margin-bottom: 15px;
-}
-
 input {
   width: 90%;
   margin: 10px;
@@ -101,14 +97,8 @@ const supabaseClient = supabase.createClient(
   "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF"
 );
 
-// 🔎 VERIFICA STATUS DA TAG
+// 🔎 VERIFICA STATUS
 async function verificar() {
-
-  if (!codigo) {
-    document.getElementById("mensagem").innerHTML =
-      "<div class='msg erro'>Código não informado</div>";
-    return;
-  }
 
   const { data, error } = await supabaseClient
     .from('pets')
@@ -116,23 +106,18 @@ async function verificar() {
     .eq('codigo_tag', codigo)
     .single();
 
-  // ❌ NÃO EXISTE
   if (error || !data) {
     document.getElementById("mensagem").innerHTML =
       "<div class='msg erro'>TAG NÃO CADASTRADA</div>";
     return;
   }
 
-  // 🔒 JÁ USADA
+  // 🔒 JÁ ATIVADA
   if (data.status === "USADA") {
 
     document.getElementById("mensagem").innerHTML =
       "<div class='msg sucesso'>✅ TAG JÁ ATIVADA</div>";
 
-    // evita loop
-    localStorage.setItem("tag_ativada_" + codigo, "true");
-
-    // redireciona
     setTimeout(() => {
       window.location.href = "pet.html?codigo=" + codigo;
     }, 1500);
@@ -148,7 +133,7 @@ async function verificar() {
 }
 
 
-// 🚀 ATIVAR TAG
+// 🚀 ATIVAR COM BLOQUEIO REAL
 async function ativar() {
 
   const nomePet = document.getElementById("pet").value;
@@ -160,7 +145,7 @@ async function ativar() {
     return;
   }
 
-  const { error } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from('pets')
     .update({
       nome_pet: nomePet,
@@ -170,20 +155,26 @@ async function ativar() {
       data_cadastro: new Date()
     })
     .eq('codigo_tag', codigo)
+    .eq('status', 'LIVRE') // 🔥 TRAVA DEFINITIVA
     .select();
 
-  if (error) {
-    alert("Erro ao ativar");
+  // 🚨 BLOQUEIO
+  if (!data || data.length === 0) {
+
+    document.getElementById("mensagem").innerHTML =
+      "<div class='msg erro'>⚠️ Esta TAG já foi ativada</div>";
+
+    setTimeout(() => {
+      window.location.href = "pet.html?codigo=" + codigo;
+    }, 1500);
+
     return;
   }
 
-  // salva local (evita loop)
-  localStorage.setItem("tag_ativada_" + codigo, "true");
-
+  // ✅ SUCESSO
   document.getElementById("mensagem").innerHTML =
     "<div class='msg sucesso'>🚀 TAG ATIVADA COM SUCESSO</div>";
 
-  // redireciona
   setTimeout(() => {
     window.location.href = "pet.html?codigo=" + codigo;
   }, 1500);
