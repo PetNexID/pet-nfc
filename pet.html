@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pet</title>
+</head>
+<body>
+
+<h1 id="nome">Carregando...</h1>
+<p id="telefone"></p>
+
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const codigo = urlParams.get('codigo');
+
+const supabase = supabase.createClient(
+  "https://wbinbiqurgbqfimjuyvh.supabase.co",
+  "SUA_CHAVE_AQUI"
+);
+
+async function carregar() {
+  const { data } = await supabase
+    .from('pets')
+    .select('*')
+    .eq('codigo_tag', codigo)
+    .single();
+
+  if (!data) {
+    document.body.innerHTML = "<h1>Tag não encontrada</h1>";
+    return;
+  }
+
+  if (!data.ativo) {
+    document.body.innerHTML = "<h1>Tag não ativada</h1>";
+    return;
+  }
+
+  document.getElementById("nome").innerText = data.nome_pet;
+  document.getElementById("telefone").innerText = data.telefone;
+}
+
+carregar();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+</body>
+</html>
