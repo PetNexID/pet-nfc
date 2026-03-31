@@ -90,20 +90,25 @@ const supabaseClient = supabase.createClient(
 // 🔎 VERIFICA STATUS
 async function verificar() {
 
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from('pets')
     .select('status')
     .eq('codigo_tag', codigo)
     .single();
 
-  // 🔴 USADA → BLOQUEIA
-  if (data.status === "USADA") {
-    mostrarErro("⚠️ TAG JÁ CADASTRADA");
-    fecharTela();
+  if (error) {
+    console.error(error);
+    mostrarErro("Erro ao consultar TAG");
     return;
   }
 
-  // 🟢 LIVRE → MOSTRA FORMULÁRIO
+  // 🔴 JÁ USADA
+  if (data.status === "USADA") {
+    mostrarErro("⚠️ TAG JÁ CADASTRADA");
+    return;
+  }
+
+  // 🟢 LIVRE
   document.getElementById("mensagem").innerHTML =
     "<div class='msg'>Preencha os dados para ativar</div>";
 
@@ -111,7 +116,7 @@ async function verificar() {
 }
 
 
-// 🚀 ATIVAÇÃO SEGURA
+// 🚀 ATIVAR TAG
 async function ativar() {
 
   const nomePet = document.getElementById("pet").value;
@@ -123,7 +128,7 @@ async function ativar() {
     return;
   }
 
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from('pets')
     .update({
       nome_pet: nomePet,
@@ -136,19 +141,24 @@ async function ativar() {
     .eq('status', 'LIVRE')
     .select();
 
-  // 🔒 SE JÁ FOI ATIVADA
+  // 🚨 ERRO REAL DO BANCO
+  if (error) {
+    console.error(error);
+    mostrarErro("Erro ao salvar no banco");
+    return;
+  }
+
+  // 🔒 JÁ FOI ATIVADA
   if (!data || data.length === 0) {
     mostrarErro("⚠️ TAG JÁ CADASTRADA");
-    fecharTela();
     return;
   }
 
   // ✅ SUCESSO
   mostrarSucesso("✅ TAG CADASTRADA COM SUCESSO");
 
-  setTimeout(() => {
-    fecharTela();
-  }, 2000);
+  // 🔒 BLOQUEIA NOVA ATIVAÇÃO
+  document.getElementById("formulario").style.display = "none";
 }
 
 
@@ -161,15 +171,6 @@ function mostrarErro(msg) {
 function mostrarSucesso(msg) {
   document.getElementById("mensagem").innerHTML =
     "<div class='msg sucesso'>" + msg + "</div>";
-}
-
-
-// 🔒 FECHAR TELA
-function fecharTela() {
-  setTimeout(() => {
-    window.close();
-    window.location.href = "about:blank";
-  }, 1500);
 }
 
 
