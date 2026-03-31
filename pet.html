@@ -20,12 +20,10 @@ body {
   padding: 25px;
   border-radius: 20px;
   background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(10px);
 }
 
 .logo {
   width: 200px;
-  margin-bottom: 10px;
 }
 
 .status {
@@ -54,12 +52,21 @@ a {
 
 .whatsapp { background: linear-gradient(90deg,#00c6ff,#0072ff); }
 .ligar { background: linear-gradient(90deg,#ff7e5f,#feb47b); }
+
+.msg {
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: bold;
+  background: #ff2e2e;
+}
 </style>
 </head>
 
 <body>
 
 <div class="card">
+
 <img src="Logo.png" class="logo">
 
 <div class="status">🐾 PET PERDIDO</div>
@@ -78,6 +85,8 @@ Tutor: <span id="tutor">---</span>
 📞 Ligar para o dono
 </a>
 
+<div id="mensagem"></div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -93,28 +102,30 @@ const supabaseClient = supabase.createClient(
 
 async function carregar() {
 
-  const { data, error } = await supabaseClient
+  const { data } = await supabaseClient
     .from('pets')
     .select('*')
     .eq('codigo_tag', codigo)
     .single();
 
-  if (error || !data) {
-    document.body.innerHTML = "<h1>Tag não encontrada</h1>";
+  // 🔴 NÃO ATIVADA
+  if (data.status !== "USADA") {
+
+    document.getElementById("nome").innerText = "TAG NÃO ATIVADA";
+    document.getElementById("tutor").innerText = "-";
+
+    document.getElementById("whatsapp").style.display = "none";
+    document.getElementById("ligar").style.display = "none";
+
+    document.getElementById("mensagem").innerHTML =
+      "<div class='msg'>⚠️ Esta TAG ainda não foi ativada</div>";
+
     return;
   }
 
-  const okLocal = localStorage.getItem("tag_ok_" + codigo);
-
-  if (data.status !== "USADA" && !okLocal) {
-    window.location.href = "ativar.html?codigo=" + codigo;
-    return;
-  }
-
-  localStorage.removeItem("tag_ok_" + codigo);
-
-  document.getElementById("nome").innerText = data.nome_pet;
-  document.getElementById("tutor").innerText = data.nome_tutor;
+  // ✅ ATIVADA
+  document.getElementById("nome").innerText = data.nome_pet || "Pet";
+  document.getElementById("tutor").innerText = data.nome_tutor || "Tutor";
 
   document.getElementById("whatsapp").href =
     "https://wa.me/55" + data.telefone;
