@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ativar TAG</title>
+<title>Ativação da TAG</title>
 
 <style>
 body {
@@ -16,7 +16,7 @@ body {
 
 .card {
   max-width: 400px;
-  margin: 40px auto;
+  margin: 50px auto;
   padding: 25px;
   border-radius: 20px;
   background: rgba(255,255,255,0.05);
@@ -25,8 +25,12 @@ body {
 }
 
 .logo {
-  width: 180px;
+  width: 200px;
   margin-bottom: 10px;
+}
+
+h2 {
+  margin-bottom: 15px;
 }
 
 input {
@@ -46,17 +50,15 @@ button {
   border: none;
   font-size: 16px;
   cursor: pointer;
-}
-
-.btn-ativar {
   background: linear-gradient(90deg,#00c6ff,#0072ff);
   color: white;
 }
 
 .msg {
   margin: 15px;
-  padding: 10px;
+  padding: 12px;
   border-radius: 10px;
+  font-weight: bold;
 }
 
 .erro {
@@ -83,7 +85,7 @@ button {
   <input id="pet" placeholder="Nome do Pet">
   <input id="tutor" placeholder="Nome do Tutor">
   <input id="telefone" placeholder="WhatsApp">
-  <button class="btn-ativar" onclick="ativar()">Ativar TAG</button>
+  <button onclick="ativar()">Ativar TAG</button>
 </div>
 
 </div>
@@ -99,7 +101,14 @@ const supabaseClient = supabase.createClient(
   "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF"
 );
 
+// 🔎 VERIFICA STATUS DA TAG
 async function verificar() {
+
+  if (!codigo) {
+    document.getElementById("mensagem").innerHTML =
+      "<div class='msg erro'>Código não informado</div>";
+    return;
+  }
 
   const { data, error } = await supabaseClient
     .from('pets')
@@ -116,18 +125,30 @@ async function verificar() {
 
   // 🔒 JÁ USADA
   if (data.status === "USADA") {
+
     document.getElementById("mensagem").innerHTML =
-      "<div class='msg erro'>⚠️ Esta TAG já foi ativada</div>";
+      "<div class='msg sucesso'>✅ TAG JÁ ATIVADA</div>";
+
+    // evita loop
+    localStorage.setItem("tag_ativada_" + codigo, "true");
+
+    // redireciona
+    setTimeout(() => {
+      window.location.href = "pet.html?codigo=" + codigo;
+    }, 1500);
+
     return;
   }
 
-  // ✅ LIBERADA
+  // ✅ LIVRE
   document.getElementById("mensagem").innerHTML =
     "<div class='msg'>Preencha os dados para ativar</div>";
 
   document.getElementById("formulario").style.display = "block";
 }
 
+
+// 🚀 ATIVAR TAG
 async function ativar() {
 
   const nomePet = document.getElementById("pet").value;
@@ -139,34 +160,6 @@ async function ativar() {
     return;
   }
 
-  const { data, error } = await supabaseClient
-    .from('pets')
-    .update({
-      nome_pet: nomePet,
-      nome_tutor: nomeTutor,
-      telefone: telefone,
-      status: "USADA",
-      data_cadastro: new Date()
-    })
-    .eq('codigo_tag', codigo)
-    .select(); // 🔥 IMPORTANTE
-
-  if (error) {
-    alert("Erro ao ativar");
-    return;
-  }
-
-  // 🔥 FORÇA GARANTIA LOCAL
-  localStorage.setItem("tag_ativada_" + codigo, "true");
-
-  document.getElementById("mensagem").innerHTML =
-    "<div class='msg sucesso'>TAG ATIVADA COM SUCESSO 🚀</div>";
-
-  setTimeout(() => {
-    window.location.href = "pet.html?codigo=" + codigo;
-  }, 1500);
-}
-
   const { error } = await supabaseClient
     .from('pets')
     .update({
@@ -176,18 +169,21 @@ async function ativar() {
       status: "USADA",
       data_cadastro: new Date()
     })
-    .eq('codigo_tag', codigo);
+    .eq('codigo_tag', codigo)
+    .select();
 
   if (error) {
     alert("Erro ao ativar");
     return;
   }
 
-  // ✅ CONFIRMAÇÃO VISUAL
-  document.getElementById("mensagem").innerHTML =
-    "<div class='msg sucesso'>TAG ATIVADA COM SUCESSO 🚀</div>";
+  // salva local (evita loop)
+  localStorage.setItem("tag_ativada_" + codigo, "true");
 
-  // ⏳ REDIRECIONA AUTOMATICAMENTE
+  document.getElementById("mensagem").innerHTML =
+    "<div class='msg sucesso'>🚀 TAG ATIVADA COM SUCESSO</div>";
+
+  // redireciona
   setTimeout(() => {
     window.location.href = "pet.html?codigo=" + codigo;
   }, 1500);
