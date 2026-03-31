@@ -8,23 +8,27 @@
 <h1 id="nome">Carregando...</h1>
 <p id="telefone"></p>
 
+<!-- 🔥 CARREGA SUPABASE PRIMEIRO -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
 <script>
 const urlParams = new URLSearchParams(window.location.search);
 const codigo = urlParams.get('codigo');
 
-const supabase = supabase.createClient(
+// 🔥 AGORA FUNCIONA
+const supabaseClient = supabase.createClient(
   "https://wbinbiqurgbqfimjuyvh.supabase.co",
-  "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF"
+  "SUA_CHAVE_AQUI"
 );
 
 async function carregar() {
-  const { data } = await supabase
+  const { data, error } = await supabaseClient
     .from('pets')
     .select('*')
     .eq('codigo_tag', codigo)
     .single();
 
-  if (!data) {
+  if (error || !data) {
     document.body.innerHTML = "<h1>Tag não encontrada</h1>";
     return;
   }
@@ -40,8 +44,6 @@ async function carregar() {
 
 carregar();
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 </body>
 </html>
