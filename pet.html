@@ -1,106 +1,83 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pet NeX ID</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pet NeX ID</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      color: white;
-      text-align: center;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color: white;
+  text-align: center;
+}
 
-    .card {
-      max-width: 380px;
-      margin: 60px auto;
-      padding: 25px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.05);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-      backdrop-filter: blur(10px);
-    }
+.card {
+  max-width: 380px;
+  margin: 60px auto;
+  padding: 25px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+}
 
-    .logo {
-      width: 200px;
-      max-width: 90%;
-      margin-bottom: 15px;
-    }
+.logo {
+  width: 200px;
+  margin-bottom: 10px;
+}
 
-    .status {
-      background: #ff2e2e;
-      padding: 10px;
-      border-radius: 10px;
-      font-weight: bold;
-      margin-bottom: 15px;
-    }
+.status {
+  background: #ff2e2e;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
 
-    h1 {
-      margin: 10px 0;
-      font-size: 28px;
-    }
+.info {
+  background: rgba(255,255,255,0.1);
+  padding: 10px;
+  border-radius: 10px;
+  margin: 15px 0;
+}
 
-    .info {
-      background: rgba(255,255,255,0.1);
-      padding: 10px;
-      border-radius: 10px;
-      margin: 15px 0;
-    }
+a {
+  display: block;
+  margin: 10px auto;
+  padding: 14px;
+  width: 90%;
+  border-radius: 10px;
+  text-decoration: none;
+  color: white;
+}
 
-    a {
-      display: block;
-      margin: 12px auto;
-      padding: 14px;
-      width: 90%;
-      border-radius: 12px;
-      font-size: 16px;
-      text-decoration: none;
-      color: white;
-    }
-
-    .whatsapp {
-      background: linear-gradient(90deg, #00c6ff, #0072ff);
-    }
-
-    .ligar {
-      background: linear-gradient(90deg, #ff7e5f, #feb47b);
-    }
-
-    .footer {
-      margin-top: 15px;
-      font-size: 12px;
-      opacity: 0.7;
-    }
-  </style>
+.whatsapp { background: linear-gradient(90deg,#00c6ff,#0072ff); }
+.ligar { background: linear-gradient(90deg,#ff7e5f,#feb47b); }
+</style>
 </head>
 
 <body>
 
 <div class="card">
-  <img src="Logo.png" class="logo">
+<img src="Logo.png" class="logo">
 
-  <div class="status">🐾 PET PERDIDO</div>
+<div class="status">🐾 PET PERDIDO</div>
 
-  <h1 id="nome">Carregando...</h1>
+<h1 id="nome">Carregando...</h1>
 
-  <div class="info">
-    Tutor: <span id="tutor">---</span>
-  </div>
+<div class="info">
+Tutor: <span id="tutor">---</span>
+</div>
 
-  <a id="whatsapp" class="whatsapp" target="_blank">
-    📍 Avisar dono via WhatsApp
-  </a>
+<a id="whatsapp" class="whatsapp" target="_blank">
+📍 Avisar dono via WhatsApp
+</a>
 
-  <a id="ligar" class="ligar">
-    📞 Ligar para o dono
-  </a>
+<a id="ligar" class="ligar">
+📞 Ligar para o dono
+</a>
 
-  <div class="footer">
-    PetNex ID • Tecnologia para pets
-  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -127,22 +104,18 @@ async function carregar() {
     return;
   }
 
-  // 🔥 CORREÇÃO DO LOOP
-  const ativadaLocal = localStorage.getItem("tag_ativada_" + codigo);
+  const okLocal = localStorage.getItem("tag_ok_" + codigo);
 
-  if (data.status !== "USADA" && !ativadaLocal) {
+  if (data.status !== "USADA" && !okLocal) {
     window.location.href = "ativar.html?codigo=" + codigo;
     return;
   }
 
-  // 🔥 LIMPA CACHE LOCAL
-  localStorage.removeItem("tag_ativada_" + codigo);
+  localStorage.removeItem("tag_ok_" + codigo);
 
-  // ✅ DADOS
-  document.getElementById("nome").innerText = data.nome_pet || "Pet";
-  document.getElementById("tutor").innerText = data.nome_tutor || "Não informado";
+  document.getElementById("nome").innerText = data.nome_pet;
+  document.getElementById("tutor").innerText = data.nome_tutor;
 
-  // ✅ BOTÕES
   document.getElementById("whatsapp").href =
     "https://wa.me/55" + data.telefone;
 
