@@ -1,28 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
+  <meta charset="UTF-8">
   <title>Pet</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      max-width: 400px;
+      margin: 40px auto;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    p {
+      font-size: 18px;
+    }
+
+    a, button {
+      display: block;
+      margin: 15px auto;
+      padding: 12px;
+      width: 90%;
+      max-width: 300px;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+      text-decoration: none;
+      color: white;
+      cursor: pointer;
+    }
+
+    #whatsapp {
+      background: #25D366;
+    }
+
+    button {
+      background: #007bff;
+    }
+  </style>
 </head>
+
 <body>
-  
 
-<h1 id="nome">Carregando...</h1>
-<p id="telefone"></p>
+<div class="card">
+  <h1 id="nome">Carregando...</h1>
+  <p id="telefone"></p>
 
-<!-- 🔥 CARREGA SUPABASE PRIMEIRO -->
+  <a id="whatsapp" target="_blank">Falar com o dono</a>
+
+  <button onclick="enviarLocalizacao()">Enviar minha localização</button>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 <script>
 const urlParams = new URLSearchParams(window.location.search);
 const codigo = urlParams.get('codigo');
 
-// 🔥 AGORA FUNCIONA
 const supabaseClient = supabase.createClient(
   "https://wbinbiqurgbqfimjuyvh.supabase.co",
   "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF"
 );
 
+let telefoneGlobal = "";
+
 async function carregar() {
+  if (!codigo) {
+    document.body.innerHTML = "<h1>Código não informado</h1>";
+    return;
+  }
+
   const { data, error } = await supabaseClient
     .from('pets')
     .select('*')
@@ -39,8 +100,36 @@ async function carregar() {
     return;
   }
 
-  document.getElementById("nome").innerText = data.nome_pet;
-  document.getElementById("telefone").innerText = data.telefone;
+  document.getElementById("nome").innerText = data.nome_pet || "Pet";
+  document.getElementById("telefone").innerText = data.telefone || "";
+
+  telefoneGlobal = data.telefone;
+
+  document.getElementById("whatsapp").href =
+    "https://wa.me/55" + data.telefone;
+}
+
+function enviarLocalizacao() {
+  if (!telefoneGlobal) {
+    alert("Telefone não disponível");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+
+      const link = `https://www.google.com/maps?q=${lat},${lon}`;
+
+      window.open(
+        `https://wa.me/55${telefoneGlobal}?text=Encontrei seu pet! Localização: ${link}`
+      );
+    },
+    () => {
+      alert("Não foi possível obter localização");
+    }
+  );
 }
 
 carregar();
