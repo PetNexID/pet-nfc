@@ -2,41 +2,58 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Pet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet NeX ID</title>
 
   <style>
     body {
-      font-family: Arial;
-      text-align: center;
-      background: #f5f5f5;
       margin: 0;
-      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: white;
+      text-align: center;
     }
 
     .card {
-      background: white;
-      padding: 20px;
-      border-radius: 15px;
-      max-width: 400px;
-      margin: 40px auto;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      max-width: 380px;
+      margin: 60px auto;
+      padding: 25px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.05);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      backdrop-filter: blur(10px);
+    }
+
+    .logo {
+      margin-bottom: 15px;
+    }
+
+    .status {
+      background: #ff2e2e;
+      padding: 10px;
+      border-radius: 10px;
+      font-weight: bold;
+      margin-bottom: 15px;
     }
 
     h1 {
+      margin: 10px 0;
       font-size: 28px;
     }
 
-    p {
-      font-size: 18px;
+    .info {
+      background: rgba(255,255,255,0.1);
+      padding: 10px;
+      border-radius: 10px;
+      margin: 15px 0;
     }
 
     a, button {
       display: block;
-      margin: 15px auto;
-      padding: 12px;
+      margin: 12px auto;
+      padding: 14px;
       width: 90%;
-      max-width: 300px;
-      border-radius: 10px;
+      border-radius: 12px;
       border: none;
       font-size: 16px;
       text-decoration: none;
@@ -44,12 +61,18 @@
       cursor: pointer;
     }
 
-    #whatsapp {
-      background: #25D366;
+    .whatsapp {
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
     }
 
-    button {
-      background: #007bff;
+    .ligar {
+      background: linear-gradient(90deg, #ff7e5f, #feb47b);
+    }
+
+    .footer {
+      margin-top: 15px;
+      font-size: 12px;
+      opacity: 0.7;
     }
   </style>
 </head>
@@ -57,12 +80,27 @@
 <body>
 
 <div class="card">
+  <img src="Logo.png" width="140" class="logo">
+
+  <div class="status">🐾 PET PERDIDO</div>
+
   <h1 id="nome">Carregando...</h1>
-  <p id="telefone"></p>
 
-  <a id="whatsapp" target="_blank">Falar com o dono</a>
+  <div class="info">
+    Tutor: <span id="telefone">---</span>
+  </div>
 
-  <button onclick="enviarLocalizacao()">Enviar minha localização</button>
+  <a id="whatsapp" class="whatsapp" target="_blank">
+    📍 Avisar dono via WhatsApp
+  </a>
+
+  <a id="ligar" class="ligar">
+    📞 Ligar para o dono
+  </a>
+
+  <div class="footer">
+    PetNex ID • Tecnologia para pets
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -76,14 +114,7 @@ const supabaseClient = supabase.createClient(
   "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF"
 );
 
-let telefoneGlobal = "";
-
 async function carregar() {
-  if (!codigo) {
-    document.body.innerHTML = "<h1>Código não informado</h1>";
-    return;
-  }
-
   const { data, error } = await supabaseClient
     .from('pets')
     .select('*')
@@ -96,40 +127,18 @@ async function carregar() {
   }
 
   if (!data.ativo) {
-    document.body.innerHTML = "<h1>Tag não ativada</h1>";
+    window.location.href = "ativar.html?codigo=" + codigo;
     return;
   }
 
-  document.getElementById("nome").innerText = data.nome_pet || "Pet";
-  document.getElementById("telefone").innerText = data.telefone || "";
-
-  telefoneGlobal = data.telefone;
+  document.getElementById("nome").innerText = data.nome_pet;
+  document.getElementById("telefone").innerText = data.telefone;
 
   document.getElementById("whatsapp").href =
     "https://wa.me/55" + data.telefone;
-}
 
-function enviarLocalizacao() {
-  if (!telefoneGlobal) {
-    alert("Telefone não disponível");
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
-
-      const link = `https://www.google.com/maps?q=${lat},${lon}`;
-
-      window.open(
-        `https://wa.me/55${telefoneGlobal}?text=Encontrei seu pet! Localização: ${link}`
-      );
-    },
-    () => {
-      alert("Não foi possível obter localização");
-    }
-  );
+  document.getElementById("ligar").href =
+    "tel:+55" + data.telefone;
 }
 
 carregar();
