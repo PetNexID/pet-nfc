@@ -23,7 +23,8 @@ body {
 }
 
 .logo {
-  width: 200px;
+  width: 220px;
+  margin-bottom: 10px;
 }
 
 .status {
@@ -48,6 +49,7 @@ a {
   border-radius: 10px;
   text-decoration: none;
   color: white;
+  font-weight: bold;
 }
 
 .whatsapp { background: linear-gradient(90deg,#00c6ff,#0072ff); }
@@ -69,7 +71,7 @@ a {
 
 <img src="Logo.png" class="logo">
 
-<div class="status">🐾 PET PERDIDO 🐾</div>
+<div class="status">🐾 PET PERDIDO</div>
 
 <h1 id="nome">Carregando...</h1>
 
@@ -77,7 +79,7 @@ a {
 Tutor: <span id="tutor">---</span>
 </div>
 
-<a id="whatsapp" class="whatsapp" target="_blank">
+<a id="whatsapp" class="whatsapp">
 📍 Avisar dono via WhatsApp
 </a>
 
@@ -100,13 +102,22 @@ const supabaseClient = supabase.createClient(
   "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF"
 );
 
+let telefoneGlobal = "";
+
+// 🔎 CARREGAR DADOS
 async function carregar() {
 
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from('pets')
     .select('*')
     .eq('codigo_tag', codigo)
     .single();
+
+  if (error || !data) {
+    document.getElementById("mensagem").innerHTML =
+      "<div class='msg'>Erro ao carregar dados</div>";
+    return;
+  }
 
   // 🔴 NÃO ATIVADA
   if (data.status !== "USADA") {
@@ -127,12 +138,55 @@ async function carregar() {
   document.getElementById("nome").innerText = data.nome_pet || "Pet";
   document.getElementById("tutor").innerText = data.nome_tutor || "Tutor";
 
-  document.getElementById("whatsapp").href =
-    "https://wa.me/55" + data.telefone;
+  telefoneGlobal = data.telefone;
 
   document.getElementById("ligar").href =
-    "tel:+55" + data.telefone;
+    "tel:+55" + telefoneGlobal;
 }
+
+
+// 📍 BOTÃO WHATSAPP COM LOCALIZAÇÃO
+document.getElementById("whatsapp").addEventListener("click", function() {
+
+  if (!telefoneGlobal) {
+    alert("Telefone não disponível");
+    return;
+  }
+
+  if (navigator.geolocation) {
+
+    navigator.geolocation.getCurrentPosition(function(pos) {
+
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      const mensagem = encodeURIComponent(
+        "📍 Encontrei seu pet!\n\nLocalização:\nhttps://maps.google.com/?q=" 
+        + lat + "," + lng
+      );
+
+      const url = "https://wa.me/55" + telefoneGlobal + "?text=" + mensagem;
+
+      window.open(url, "_blank");
+
+    }, function() {
+
+      // fallback
+      const mensagem = encodeURIComponent(
+        "📍 Encontrei seu pet! Entre em contato comigo."
+      );
+
+      const url = "https://wa.me/55" + telefoneGlobal + "?text=" + mensagem;
+
+      window.open(url, "_blank");
+
+    });
+
+  } else {
+    alert("Seu dispositivo não suporta localização");
+  }
+
+});
 
 carregar();
 </script>
