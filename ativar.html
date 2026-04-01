@@ -45,6 +45,10 @@
       const params = new URLSearchParams(window.location.search);
       const codigo = params.get("codigo");
 
+       // 👇 COLOCA AQUI
+    console.log("KEY:", SUPABASE_KEY);
+    console.log("URL:", SUPABASE_URL);
+
       if (!codigo) {
         return mostrarErro("Código inválido");
       }
