@@ -22,8 +22,15 @@ body {
   border-radius: 10px;
 }
 
+input {
+  padding: 8px;
+  margin: 5px;
+  border-radius: 6px;
+  border: none;
+}
+
 button {
-  padding: 10px;
+  padding: 8px 12px;
   margin: 5px;
   border-radius: 6px;
   border: none;
@@ -35,9 +42,7 @@ button {
 <body>
 
 <script>
-// 🔐 LOGIN SIMPLES
 const senha = prompt("Digite a senha:");
-
 if (senha !== "123456") {
   alert("Acesso negado");
   window.location.href = "/";
@@ -46,14 +51,17 @@ if (senha !== "123456") {
 
 <h2>📊 Painel de Ativações</h2>
 
-<!-- FILTRO -->
+<!-- FILTROS -->
 <label>Data Inicial:</label>
 <input type="date" id="inicio">
 
 <label>Data Final:</label>
 <input type="date" id="fim">
 
-<br><br>
+<br>
+
+<label>Buscar TAG:</label>
+<input type="text" id="buscaTag" placeholder="Ex: PET010" oninput="filtrarLocal()">
 
 <button onclick="carregar()">🔎 Filtrar</button>
 <button onclick="exportar()">📥 Exportar Excel</button>
@@ -84,8 +92,9 @@ const supabaseClient = supabase.createClient(
 
 let chart;
 let dados = [];
+let dadosFiltrados = [];
 
-// 🚀 CARREGAR DADOS
+// 🔥 CARREGAR DO BANCO
 async function carregar() {
 
   let query = supabaseClient
@@ -102,20 +111,37 @@ async function carregar() {
   const { data } = await query;
 
   dados = data || [];
+  dadosFiltrados = [...dados];
 
-  // 🔢 TOTAL
-  document.getElementById("total").innerText = dados.length;
+  aplicarRender();
+}
 
-  // 📊 AGRUPAR POR DIA
+// 🔎 FILTRO LOCAL (BUSCA TAG)
+function filtrarLocal() {
+
+  const termo = document.getElementById("buscaTag").value.toLowerCase();
+
+  dadosFiltrados = dados.filter(p =>
+    (p.codigo_tag || "").toLowerCase().includes(termo)
+  );
+
+  aplicarRender();
+}
+
+// 🎯 RENDER GERAL
+function aplicarRender() {
+
+  document.getElementById("total").innerText = dadosFiltrados.length;
+
+  // 📊 GRÁFICO
   const grupo = {};
 
-  dados.forEach(p => {
+  dadosFiltrados.forEach(p => {
     if (!p.data_ativacao) return;
     const dia = new Date(p.data_ativacao).toLocaleDateString();
     grupo[dia] = (grupo[dia] || 0) + 1;
   });
 
-  // 🔄 DESTRUIR GRÁFICO ANTIGO
   if (chart) chart.destroy();
 
   chart = new Chart(document.getElementById("grafico"), {
@@ -132,7 +158,7 @@ async function carregar() {
   // 🏆 RANKING
   const ranking = {};
 
-  dados.forEach(p => {
+  dadosFiltrados.forEach(p => {
     if (!p.nome_tutor) return;
     ranking[p.nome_tutor] = (ranking[p.nome_tutor] || 0) + 1;
   });
@@ -143,7 +169,7 @@ async function carregar() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .forEach(([nome, total]) => {
-      htmlRank += `<div class="box">👤 ${nome} - ${total} ativações</div>`;
+      htmlRank += `<div class="box">👤 ${nome} - ${total}</div>`;
     });
 
   document.getElementById("ranking").innerHTML = htmlRank || "Sem dados";
@@ -151,9 +177,10 @@ async function carregar() {
   // 📋 LISTA
   let html = "";
 
-  dados.forEach(p => {
+  dadosFiltrados.forEach(p => {
     html += `
       <div class="box">
+        🏷️ TAG: ${p.codigo_tag || "-"} <br>
         🐶 ${p.nome_pet || "-"} <br>
         👤 ${p.nome_tutor || "-"} <br>
         📞 ${p.telefone || "-"} <br>
@@ -162,19 +189,19 @@ async function carregar() {
     `;
   });
 
-  document.getElementById("lista").innerHTML = html || "Nenhuma ativação encontrada";
+  document.getElementById("lista").innerHTML = html || "Nenhum resultado";
 }
 
-
-// 📥 EXPORTAR EXCEL
+// 📥 EXPORTAR
 function exportar() {
 
-  if (!dados || dados.length === 0) {
-    alert("Sem dados para exportar");
+  if (!dadosFiltrados.length) {
+    alert("Sem dados");
     return;
   }
 
-  const dadosFormatados = dados.map(p => ({
+  const dadosFormatados = dadosFiltrados.map(p => ({
+    TAG: p.codigo_tag,
     Pet: p.nome_pet,
     Tutor: p.nome_tutor,
     Telefone: p.telefone,
@@ -188,7 +215,6 @@ function exportar() {
 
   XLSX.writeFile(wb, "ativacoes.xlsx");
 }
-
 
 // 🚀 AUTO LOAD
 carregar();
