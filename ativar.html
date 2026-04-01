@@ -26,12 +26,22 @@ body {
   width: 200px;
 }
 
+label {
+  display: block;
+  text-align: left;
+  width: 90%;
+  margin: 10px auto 5px;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
 input {
   width: 90%;
-  margin: 10px;
+  margin: 5px auto 10px;
   padding: 14px;
   border-radius: 10px;
   border: none;
+  display: block;
 }
 
 button {
@@ -67,10 +77,18 @@ button {
 <div id="mensagem">Verificando TAG...</div>
 
 <div id="formulario" style="display:none;">
-  <input id="pet" placeholder="Nome do Pet">
-  <input id="tutor" placeholder="Nome do Tutor">
-  <input id="telefone" placeholder="WhatsApp">
+
+  <label>Nome do Pet</label>
+  <input id="pet" placeholder="Ex: Rex">
+
+  <label>Nome do Tutor</label>
+  <input id="tutor" placeholder="Ex: João Silva">
+
+  <label>WhatsApp</label>
+  <input id="telefone" placeholder="(85) 99999-9999">
+
   <button onclick="ativar()">Ativar TAG</button>
+
 </div>
 
 </div>
@@ -87,7 +105,7 @@ const supabaseClient = supabase.createClient(
 );
 
 
-// 🔎 VERIFICA STATUS
+// 🔎 VERIFICAR STATUS
 async function verificar() {
 
   const { data, error } = await supabaseClient
@@ -102,13 +120,11 @@ async function verificar() {
     return;
   }
 
-  // 🔴 JÁ ATIVADA
   if (data.status === "USADA") {
     mostrarErro("⚠️ TAG JÁ CADASTRADA");
     return;
   }
 
-  // 🟢 LIVRE
   document.getElementById("mensagem").innerHTML =
     "<div class='msg'>Preencha os dados para ativar</div>";
 
@@ -116,22 +132,64 @@ async function verificar() {
 }
 
 
-// 🚀 ATIVAÇÃO
+// 🔥 MÁSCARA WHATSAPP
+const inputTel = document.getElementById("telefone");
+
+inputTel.addEventListener("input", function(e) {
+
+  let v = e.target.value.replace(/\D/g, "");
+
+  if (v.length > 11) v = v.slice(0,11);
+
+  if (v.length > 2) {
+    v = "(" + v.slice(0,2) + ") " + v.slice(2);
+  }
+
+  if (v.length > 10) {
+    v = v.slice(0,10) + "-" + v.slice(10);
+  }
+
+  e.target.value = v;
+});
+
+
+// 🔥 VALIDAÇÃO + NORMALIZAÇÃO
+function formatarTelefone(numero) {
+
+  numero = numero.replace(/\D/g, "");
+
+  // adiciona código do Brasil
+  if (!numero.startsWith("55")) {
+    numero = "55" + numero;
+  }
+
+  const regex = /^55\d{2}9\d{8}$/;
+
+  if (!regex.test(numero)) return false;
+
+  return numero;
+}
+
+
+// 🚀 ATIVAR
 async function ativar() {
 
   const nomePet = document.getElementById("pet").value;
   const nomeTutor = document.getElementById("tutor").value;
-  const telefone = document.getElementById("telefone").value;
-  
-   
-
+  let telefone = document.getElementById("telefone").value;
 
   if (!nomePet || !nomeTutor || !telefone) {
     alert("Preencha todos os campos");
     return;
   }
 
-  // 🔥 ATUALIZA SEM TRAVA DE STATUS
+  telefone = formatarTelefone(telefone);
+
+  if (!telefone) {
+    alert("Digite um WhatsApp válido com DDD (ex: 85999999999)");
+    return;
+  }
+
   const { data, error } = await supabaseClient
     .from('pets')
     .update({
@@ -155,10 +213,8 @@ async function ativar() {
     return;
   }
 
-  // ✅ SUCESSO REAL
   mostrarSucesso("✅ TAG CADASTRADA COM SUCESSO");
 
-  // 🔒 BLOQUEIA FORMULÁRIO
   document.getElementById("formulario").style.display = "none";
 }
 
