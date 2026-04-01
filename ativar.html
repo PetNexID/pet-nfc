@@ -200,11 +200,12 @@ async function ativar() {
     const { error } = await supabaseClient
       .from("pets")
       .update({
-        nome_pet,
-        nome_tutor,
-        telefone,
-        ativo: true
-      })
+      nome_pet,
+      nome_tutor,
+      telefone,
+      ativo: true,
+      data_ativacao: new Date().toISOString()
+    })
       .eq("codigo_tag", codigo);
 
     if (error) throw error;
