@@ -36,6 +36,12 @@ button {
   border: none;
   cursor: pointer;
 }
+
+#statusFiltro {
+  margin-top: 10px;
+  font-weight: bold;
+  color: #00c6ff;
+}
 </style>
 </head>
 
@@ -43,7 +49,7 @@ button {
 
 <script>
 const senha = prompt("Digite a senha:");
-if (senha !== "1965@Jefferson") {
+if (senha !== "123456") {
   alert("Acesso negado");
   window.location.href = "/";
 }
@@ -61,10 +67,14 @@ if (senha !== "1965@Jefferson") {
 <br>
 
 <label>Buscar TAG:</label>
-<input type="text" id="buscaTag" placeholder="Ex: PET010" oninput="filtrarLocal()">
+<input type="text" id="buscaTag" placeholder="Ex: PET010">
 
-<button onclick="carregar()">🔎 Filtrar</button>
+<button onclick="buscar()">🔎 Buscar TAG</button>
+<button onclick="limparFiltro()">❌ Limpar</button>
+<button onclick="carregar()">📅 Filtrar por Data</button>
 <button onclick="exportar()">📥 Exportar Excel</button>
+
+<div id="statusFiltro"></div>
 
 <hr>
 
@@ -94,7 +104,7 @@ let chart;
 let dados = [];
 let dadosFiltrados = [];
 
-// 🔥 CARREGAR DO BANCO
+// 🚀 CARREGA DO BANCO
 async function carregar() {
 
   let query = supabaseClient
@@ -113,22 +123,44 @@ async function carregar() {
   dados = data || [];
   dadosFiltrados = [...dados];
 
+  document.getElementById("statusFiltro").innerText = "";
+
   aplicarRender();
 }
 
-// 🔎 FILTRO LOCAL (BUSCA TAG)
-function filtrarLocal() {
+// 🔎 BUSCA POR TAG (BOTÃO)
+function buscar() {
 
-  const termo = document.getElementById("buscaTag").value.toLowerCase();
+  const termo = document.getElementById("buscaTag").value.toLowerCase().trim();
+
+  if (!termo) {
+    alert("Digite uma TAG");
+    return;
+  }
 
   dadosFiltrados = dados.filter(p =>
     (p.codigo_tag || "").toLowerCase().includes(termo)
   );
 
+  document.getElementById("statusFiltro").innerText =
+    "🔎 Filtrando por TAG: " + termo;
+
   aplicarRender();
 }
 
-// 🎯 RENDER GERAL
+// ❌ LIMPAR FILTRO
+function limparFiltro() {
+
+  document.getElementById("buscaTag").value = "";
+
+  dadosFiltrados = [...dados];
+
+  document.getElementById("statusFiltro").innerText = "";
+
+  aplicarRender();
+}
+
+// 🎯 RENDER GERAL (AGORA CORRETO)
 function aplicarRender() {
 
   document.getElementById("total").innerText = dadosFiltrados.length;
@@ -189,7 +221,8 @@ function aplicarRender() {
     `;
   });
 
-  document.getElementById("lista").innerHTML = html || "Nenhum resultado";
+  document.getElementById("lista").innerHTML =
+    html || "Nenhum resultado encontrado";
 }
 
 // 📥 EXPORTAR
