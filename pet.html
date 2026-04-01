@@ -145,40 +145,6 @@ async function carregar() {
 }
 
 
-// 📍 REGISTRAR SCAN (NOVO 🔥)
-async function registrarScan() {
-
-  if (!codigo) return;
-
-  // 🛡️ antifraude: 1 por dia por dispositivo
-  const key = "scan_" + codigo + "_" + new Date().toDateString();
-
-  if (localStorage.getItem(key)) return;
-
-  localStorage.setItem(key, "ok");
-
-  if (navigator.geolocation) {
-
-    navigator.geolocation.getCurrentPosition(async function(pos) {
-
-      await supabaseClient.from("scans").insert([{
-        codigo_tag: codigo,
-        latitude: pos.coords.latitude.toString(),
-        longitude: pos.coords.longitude.toString()
-      }]);
-
-    }, async function() {
-
-      await supabaseClient.from("scans").insert([{
-        codigo_tag: codigo
-      }]);
-
-    });
-
-  }
-}
-
-
 // 📍 BOTÃO WHATSAPP COM LOCALIZAÇÃO
 document.getElementById("whatsapp").addEventListener("click", function() {
 
@@ -221,11 +187,7 @@ document.getElementById("whatsapp").addEventListener("click", function() {
 
 });
 
-
-// 🚀 EXECUÇÃO
 carregar();
-registrarScan();
-
 </script>
 
 </body>
