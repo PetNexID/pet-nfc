@@ -123,13 +123,7 @@ async function ativar() {
   const nomeTutor = document.getElementById("tutor").value;
   const telefone = document.getElementById("telefone").value;
   
-  telefone = validarTelefone(telefone);
-
-  if (!telefone) {
-  alert("Digite um WhatsApp válido com DDD (ex: 85999999999)");
-  return;
-}
-  
+   
 
 
   if (!nomePet || !nomeTutor || !telefone) {
