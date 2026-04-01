@@ -38,7 +38,7 @@
 
   <script>
     const SUPABASE_URL = "https://SEU-PROJETO.supabase.co";
-    const SUPABASE_KEY = "SUA_ANON_KEY";
+    const SUPABASE_KEY = "COLE_SUA_PUBLISHABLE_KEY_AQUI";
 
     async function verificarTag() {
       const params = new URLSearchParams(window.location.search);
@@ -55,28 +55,30 @@
             method: "GET",
             headers: {
               "apikey": SUPABASE_KEY,
-              "Authorization": `Bearer ${SUPABASE_KEY}`,
               "Content-Type": "application/json"
             }
           }
         );
 
+        console.log("STATUS:", response.status);
+
         if (!response.ok) {
+          const erroTexto = await response.text();
+          console.error("ERRO API:", erroTexto);
           throw new Error("Erro na API");
         }
 
         const data = await response.json();
-
         console.log("RESPOSTA:", data);
 
-        // 🔥 CORREÇÃO PRINCIPAL: evita travamento
+        // 🔥 NÃO TRAVA MAIS
         if (!data || data.length === 0) {
           return mostrarErro("❌ TAG não encontrada");
         }
 
         const pet = data[0];
 
-        // 🔥 mantém sua lógica original
+        // 🔥 SUA LÓGICA MANTIDA
         if (pet.status === "ATIVA") {
           atualizarStatus("🔎 TAG ativa encontrada...");
           setTimeout(() => {
@@ -90,7 +92,7 @@
         }
 
       } catch (error) {
-        console.error("ERRO:", error);
+        console.error("ERRO GERAL:", error);
         mostrarErro("⚠️ Erro ao verificar TAG");
       }
     }
