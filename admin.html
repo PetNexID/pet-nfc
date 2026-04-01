@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Painel Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body style="font-family:Arial; background:#0f2027; color:#fff; padding:20px;">
+
+<h2>📊 Painel de Ativações</h2>
+
+<!-- FILTRO -->
+<label>Data Inicial:</label>
+<input type="date" id="inicio">
+
+<label>Data Final:</label>
+<input type="date" id="fim">
+
+<button onclick="carregar()">Filtrar</button>
+
+<hr>
+
+<!-- KPIs -->
+<h3>Total de Ativações: <span id="total"></span></h3>
+
+<canvas id="grafico"></canvas>
+
+<hr>
+
+<h3>📋 Lista de Ativações</h3>
+<div id="lista"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabaseClient = supabase.createClient(
+  "https://wbinbiqurgbqfimjuyvh.supabase.co",
+  "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF"
+);
+
+async function carregar() {
+
+  let query = supabaseClient
+    .from("pets")
+    .select("*")
+    .eq("ativo", true);
+
+  const inicio = document.getElementById("inicio").value;
+  const fim = document.getElementById("fim").value;
+
+  if (inicio) {
+    query = query.gte("data_ativacao", inicio);
+  }
+
+  if (fim) {
+    query = query.lte("data_ativacao", fim + "T23:59:59");
+  }
+
+  const { data } = await query;
+
+  // 🔢 TOTAL
+  document.getElementById("total").innerText = data.length;
+
+  // 📊 AGRUPAR POR DIA
+  const grupo = {};
+
+  data.forEach(p => {
+    const dia = new Date(p.data_ativacao).toLocaleDateString();
+    grupo[dia] = (grupo[dia] || 0) + 1;
+  });
+
+  // 📊 GRÁFICO
+  new Chart(document.getElementById("grafico"), {
+    type: "bar",
+    data: {
+      labels: Object.keys(grupo),
+      datasets: [{
+        label: "Ativações",
+        data: Object.values(grupo)
+      }]
+    }
+  });
+
+  // 📋 LISTA
+  let html = "";
+
+  data.forEach(p => {
+    html += `
+      <div style="background:#203a43; margin:10px; padding:10px;">
+        🐶 ${p.nome_pet || "-"} <br>
+        👤 ${p.nome_tutor || "-"} <br>
+        📞 ${p.telefone || "-"} <br>
+        📅 ${new Date(p.data_ativacao).toLocaleString()}
+      </div>
+    `;
+  });
+
+  document.getElementById("lista").innerHTML = html;
+}
+
+carregar();
+</script>
+
+</body>
+</html>
