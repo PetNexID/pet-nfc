@@ -6,7 +6,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=SUA_KEY_AQUI"></script>
 
 <style>
 body {
@@ -21,6 +20,14 @@ body {
   padding: 15px;
   margin: 10px 0;
   border-radius: 10px;
+}
+
+button {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
 }
 </style>
 </head>
@@ -46,12 +53,14 @@ if (senha !== "123456") {
 <label>Data Final:</label>
 <input type="date" id="fim">
 
-<button onclick="carregar()">Filtrar</button>
+<br><br>
+
+<button onclick="carregar()">🔎 Filtrar</button>
 <button onclick="exportar()">📥 Exportar Excel</button>
 
 <hr>
 
-<h3>Total de Ativações: <span id="total"></span></h3>
+<h3>Total de Ativações: <span id="total">0</span></h3>
 
 <canvas id="grafico"></canvas>
 
@@ -65,11 +74,6 @@ if (senha !== "123456") {
 <h3>📋 Lista de Ativações</h3>
 <div id="lista"></div>
 
-<hr>
-
-<h3>🗺️ Mapa</h3>
-<div id="map" style="height:400px;"></div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -79,6 +83,7 @@ const supabaseClient = supabase.createClient(
 );
 
 let chart;
+let dados = [];
 
 // 🚀 CARREGAR DADOS
 async function carregar() {
@@ -96,18 +101,21 @@ async function carregar() {
 
   const { data } = await query;
 
-  window.dados = data;
+  dados = data || [];
 
-  // TOTAL
-  document.getElementById("total").innerText = data.length;
+  // 🔢 TOTAL
+  document.getElementById("total").innerText = dados.length;
 
-  // 📊 AGRUPAR
+  // 📊 AGRUPAR POR DIA
   const grupo = {};
-  data.forEach(p => {
+
+  dados.forEach(p => {
+    if (!p.data_ativacao) return;
     const dia = new Date(p.data_ativacao).toLocaleDateString();
     grupo[dia] = (grupo[dia] || 0) + 1;
   });
 
+  // 🔄 DESTRUIR GRÁFICO ANTIGO
   if (chart) chart.destroy();
 
   chart = new Chart(document.getElementById("grafico"), {
@@ -123,12 +131,14 @@ async function carregar() {
 
   // 🏆 RANKING
   const ranking = {};
-  data.forEach(p => {
+
+  dados.forEach(p => {
     if (!p.nome_tutor) return;
     ranking[p.nome_tutor] = (ranking[p.nome_tutor] || 0) + 1;
   });
 
   let htmlRank = "";
+
   Object.entries(ranking)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
@@ -136,72 +146,51 @@ async function carregar() {
       htmlRank += `<div class="box">👤 ${nome} - ${total} ativações</div>`;
     });
 
-  document.getElementById("ranking").innerHTML = htmlRank;
+  document.getElementById("ranking").innerHTML = htmlRank || "Sem dados";
 
   // 📋 LISTA
   let html = "";
-  data.forEach(p => {
+
+  dados.forEach(p => {
     html += `
       <div class="box">
         🐶 ${p.nome_pet || "-"} <br>
         👤 ${p.nome_tutor || "-"} <br>
         📞 ${p.telefone || "-"} <br>
-        📅 ${new Date(p.data_ativacao).toLocaleString()}
+        📅 ${p.data_ativacao ? new Date(p.data_ativacao).toLocaleString() : "-"}
       </div>
     `;
   });
 
-  document.getElementById("lista").innerHTML = html;
-
-  carregarMapa();
+  document.getElementById("lista").innerHTML = html || "Nenhuma ativação encontrada";
 }
 
 
-// 📥 EXPORTAR
+// 📥 EXPORTAR EXCEL
 function exportar() {
 
-  if (!window.dados) return alert("Sem dados");
+  if (!dados || dados.length === 0) {
+    alert("Sem dados para exportar");
+    return;
+  }
 
-  const dadosFormatados = window.dados.map(p => ({
+  const dadosFormatados = dados.map(p => ({
     Pet: p.nome_pet,
     Tutor: p.nome_tutor,
     Telefone: p.telefone,
-    Data: new Date(p.data_ativacao).toLocaleString()
+    Data: p.data_ativacao ? new Date(p.data_ativacao).toLocaleString() : "-"
   }));
 
   const ws = XLSX.utils.json_to_sheet(dadosFormatados);
   const wb = XLSX.utils.book_new();
 
   XLSX.utils.book_append_sheet(wb, ws, "Ativacoes");
+
   XLSX.writeFile(wb, "ativacoes.xlsx");
 }
 
 
-// 🗺️ MAPA
-async function carregarMapa() {
-
-  const { data } = await supabaseClient
-    .from("scans")
-    .select("*");
-
-  const map = new google.maps.Map(document.getElementById("map"), {
-    zoom: 4,
-    center: { lat: -14, lng: -52 }
-  });
-
-  data.forEach(s => {
-    if (s.latitude) {
-      new google.maps.Marker({
-        position: {
-          lat: parseFloat(s.latitude),
-          lng: parseFloat(s.longitude)
-        },
-        map
-      });
-    }
-  });
-}
-
+// 🚀 AUTO LOAD
 carregar();
 </script>
 
