@@ -1,237 +1,186 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Ativação da TAG</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Ativação da TAG</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #1f3a44;
-      color: #fff;
-      text-align: center;
-      padding: 40px;
-    }
+<style>
+body {
+  font-family: Arial;
+  background: #1f3a44;
+  color: #fff;
+  text-align: center;
+  padding: 40px;
+}
 
-    .box {
-      background: #2e5561;
-      padding: 30px;
-      border-radius: 12px;
-      max-width: 400px;
-      margin: auto;
-    }
+.box {
+  background: #2e5561;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 400px;
+  margin: auto;
+}
 
-    label {
-      display: block;
-      text-align: left;
-      margin-top: 10px;
-      font-size: 14px;
-      color: #cfd8dc;
-    }
+input {
+  width: 90%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 6px;
+  border: none;
+}
 
-    input {
-      display: block;
-      width: 100%;
-      margin: 5px 0 10px;
-      padding: 12px;
-      border-radius: 6px;
-      border: none;
-      box-sizing: border-box;
-    }
+button {
+  width: 95%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: #00c853;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
 
-    button {
-      display: block;
-      width: 100%;
-      margin-top: 15px;
-      padding: 14px;
-      background: linear-gradient(90deg, #00c853, #00e676);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
+button:disabled {
+  background: #777;
+}
 
-    button:hover {
-      transform: scale(1.03);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    }
+.loading {
+  opacity: 0.6;
+}
 
-    button:active {
-      transform: scale(0.97);
-    }
-
-    button:disabled {
-      background: #999;
-      cursor: not-allowed;
-    }
-  </style>
+.msg {
+  margin-top: 15px;
+  font-weight: bold;
+}
+</style>
 </head>
 
 <body>
 
 <div class="box">
-  <h1>🐶 Ativação da TAG</h1>
-  <p id="status">Verificando TAG...</p>
 
-  <div id="form" style="display:none;">
-    
-    <label>Nome do Pet</label>
-    <input type="text" id="nome_pet" placeholder="Ex: Rex">
+<h2>🐶 Ativação da TAG</h2>
 
-    <label>Nome do Tutor</label>
-    <input type="text" id="nome_tutor" placeholder="Ex: João Silva">
+<div id="status">Verificando TAG...</div>
 
-    <label>WhatsApp para contato</label>
-    <input type="text" id="telefone" placeholder="(85) 99999-9999" oninput="mascaraTelefone(this)">
+<form id="form" style="display:none;">
+  
+  <input type="text" id="nome_pet" placeholder="Nome do Pet">
+  <input type="text" id="nome_tutor" placeholder="Nome do Tutor">
+  <input type="text" id="telefone" placeholder="WhatsApp (85 99999-9999)">
+  
+  <button type="submit" id="btn">Ativar TAG</button>
 
-    <button id="btnAtivar" onclick="ativar()">Ativar TAG</button>
-  </div>
+</form>
+
+<div id="mensagem" class="msg"></div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-const SUPABASE_URL = "https://wbinbiqurgbqfimjuyvh.supabase.co";
-const SUPABASE_KEY = "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF";
+const urlParams = new URLSearchParams(window.location.search);
+const codigo = urlParams.get("codigo");
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = supabase.createClient(
+  "https://wbinbiqurgbqfimjuyvh.supabase.co",
+  "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF"
+);
 
-const params = new URLSearchParams(window.location.search);
-const codigo = params.get("codigo");
+const statusEl = document.getElementById("status");
+const form = document.getElementById("form");
+const btn = document.getElementById("btn");
+const msg = document.getElementById("mensagem");
 
-async function verificarTag() {
-  if (!codigo) return mostrarErro("Código inválido");
+// 🔒 ANTIFRAUDE: evitar múltiplos envios
+let enviando = false;
 
-  try {
-    const { data } = await supabaseClient
-      .from("pets")
-      .select("*")
-      .eq("codigo_tag", codigo)
-      .limit(1);
+// 🚀 VERIFICAR TAG
+async function verificar() {
 
-    if (!data || data.length === 0) {
-      return mostrarErro("❌ TAG não encontrada");
-    }
+  const { data } = await supabaseClient
+    .from("pets")
+    .select("*")
+    .eq("codigo_tag", codigo)
+    .single();
 
-    const pet = data[0];
-
-    if (pet.ativo === true) {
-      atualizarStatus("🔎 TAG já ativa!");
-      setTimeout(() => {
-        window.location.href = `/pet.html?codigo=${codigo}`;
-      }, 1000);
-    } else {
-      atualizarStatus("⚙️ Preencha os dados para ativar");
-      document.getElementById("form").style.display = "block";
-    }
-
-  } catch (err) {
-    mostrarErro("⚠️ Erro ao verificar TAG");
+  if (!data) {
+    statusEl.innerText = "❌ TAG inválida";
+    return;
   }
-}
 
-// 🔥 MÁSCARA
-function mascaraTelefone(input) {
-  let v = input.value.replace(/\D/g, "");
-
-  if (v.length > 11) v = v.slice(0, 11);
-
-  if (v.length > 10) {
-    input.value = v.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
-  } else if (v.length > 6) {
-    input.value = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, "($1) $2-$3");
-  } else if (v.length > 2) {
-    input.value = v.replace(/^(\d{2})(\d{0,5})$/, "($1) $2");
-  } else {
-    input.value = v;
+  // 🔒 JÁ ATIVADA
+  if (data.ativo === true) {
+    statusEl.innerText = "🚫 TAG já ativada";
+    form.style.display = "none";
+    return;
   }
+
+  // ✅ LIBERADA
+  statusEl.innerText = "✅ TAG disponível";
+  form.style.display = "block";
 }
 
-// 🔥 VALIDA TELEFONE
-function telefoneValido(numero) {
-  let v = numero.replace(/\D/g, "");
-  return v.length === 11;
-}
+// 🔥 ATIVAR
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-function formatarNumero(numero) {
-  return "55" + numero.replace(/\D/g, "");
-}
-
-// 🚀 ATIVAÇÃO COM VALIDAÇÃO
-async function ativar() {
-
-  const botao = document.getElementById("btnAtivar");
+  if (enviando) return;
 
   const nome_pet = document.getElementById("nome_pet").value.trim();
   const nome_tutor = document.getElementById("nome_tutor").value.trim();
-  const telefone_input = document.getElementById("telefone").value;
+  let telefone = document.getElementById("telefone").value.replace(/\D/g, "");
 
-  // 🔥 VALIDAÇÕES
-  if (!nome_pet) {
-    alert("Informe o nome do pet");
+  // 🧠 VALIDAÇÃO
+  if (!nome_pet || !nome_tutor) {
+    msg.innerText = "⚠️ Preencha todos os campos";
     return;
   }
 
-  if (!nome_tutor) {
-    alert("Informe o nome do tutor");
+  if (telefone.length < 11) {
+    msg.innerText = "⚠️ WhatsApp inválido";
     return;
   }
 
-  if (!telefone_input) {
-    alert("Informe o número do WhatsApp");
-    return;
-  }
+  telefone = "55" + telefone;
 
-  if (!telefoneValido(telefone_input)) {
-    alert("WhatsApp inválido. Use formato (DDD) 99999-9999");
-    return;
-  }
+  // 🔒 trava envio
+  enviando = true;
+  btn.disabled = true;
+  btn.innerText = "Ativando...";
+  btn.classList.add("loading");
 
-  botao.disabled = true;
-  botao.innerText = "Ativando...";
-
-  try {
-    const telefone = formatarNumero(telefone_input);
-
-    const { error } = await supabaseClient
-      .from("pets")
-      .update({
+  const { error } = await supabaseClient
+    .from("pets")
+    .update({
       nome_pet,
       nome_tutor,
       telefone,
       ativo: true,
       data_ativacao: new Date().toISOString()
     })
-      .eq("codigo_tag", codigo);
+    .eq("codigo_tag", codigo);
 
-    if (error) throw error;
-
-    atualizarStatus("✅ TAG ativada com sucesso!");
-
-    setTimeout(() => {
-      window.location.href = `/pet.html?codigo=${codigo}`;
-    }, 1500);
-
-  } catch (err) {
-    alert("Erro ao ativar, tente novamente");
-    botao.disabled = false;
-    botao.innerText = "Ativar TAG";
+  if (error) {
+    msg.innerText = "❌ Erro ao ativar";
+    btn.disabled = false;
+    btn.innerText = "Ativar TAG";
+    enviando = false;
+    return;
   }
-}
 
-function atualizarStatus(msg) {
-  document.getElementById("status").innerText = msg;
-}
+  msg.innerText = "✅ TAG ativada com sucesso";
 
-function mostrarErro(msg) {
-  document.getElementById("status").innerText = msg;
-}
+  setTimeout(() => {
+    window.location.href = `/pet.html?codigo=${codigo}`;
+  }, 1500);
 
-verificarTag();
+});
+
+// 🚀 START
+verificar();
 </script>
 
 </body>
