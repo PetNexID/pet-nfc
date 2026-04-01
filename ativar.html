@@ -159,10 +159,28 @@ function formatarTelefone(numero) {
   numero = numero.replace(/\D/g, "");
 
   // adiciona código do Brasil
-  if (!numero.startsWith("55")) {
-    numero = "55" + numero;
-  }
+  //if (!numero.startsWith("55")) {
+  //  numero = "55" + numero;
+ // }
 
+ // const regex = /^55\d{2}9\d{8}$/;
+
+ // if (!regex.test(numero)) return false;
+
+  //return numero;
+//}
+  function formatarTelefone(numero) {
+
+  // remove tudo que não for número
+  numero = numero.replace(/\D/g, "");
+
+  // remove qualquer 55 duplicado no início
+  numero = numero.replace(/^55+/, "");
+
+  // agora adiciona 55 corretamente
+  numero = "55" + numero;
+
+  // valida padrão BR
   const regex = /^55\d{2}9\d{8}$/;
 
   if (!regex.test(numero)) return false;
