@@ -34,23 +34,45 @@
       display: block;
       width: 100%;
       margin: 5px 0 10px;
-      padding: 10px;
-      border-radius: 5px;
+      padding: 12px;
+      border-radius: 6px;
       border: none;
+      box-sizing: border-box;
     }
 
     button {
-      padding: 12px;
-      background: #00c853;
+      display: block;
+      width: 100%;
+      margin-top: 15px;
+      padding: 14px;
+      background: linear-gradient(90deg, #00c853, #00e676);
       color: #fff;
       border: none;
-      border-radius: 5px;
-      width: 100%;
+      border-radius: 8px;
       font-size: 16px;
+      font-weight: bold;
       cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      transform: scale(1.03);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    button:disabled {
+      background: #999;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
   </style>
 </head>
+
 <body>
 
   <div class="box">
@@ -68,7 +90,7 @@
       <label>WhatsApp para contato</label>
       <input type="text" id="telefone" placeholder="(85) 99999-9999" oninput="mascaraTelefone(this)">
 
-      <button onclick="ativar()">Ativar TAG</button>
+      <button id="btnAtivar" onclick="ativar()">Ativar TAG</button>
     </div>
   </div>
 
@@ -117,7 +139,6 @@
       }
     }
 
-    // 🔥 MÁSCARA DE TELEFONE
     function mascaraTelefone(input) {
       let v = input.value.replace(/\D/g, "");
 
@@ -134,13 +155,15 @@
       }
     }
 
-    // 🔥 CONVERTE PARA PADRÃO 5585999999999
     function formatarNumero(numero) {
       let v = numero.replace(/\D/g, "");
       return "55" + v;
     }
 
     async function ativar() {
+
+      const botao = document.getElementById("btnAtivar");
+
       const nome_pet = document.getElementById("nome_pet").value;
       const nome_tutor = document.getElementById("nome_tutor").value;
       const telefone_input = document.getElementById("telefone").value;
@@ -149,9 +172,13 @@
         return atualizarStatus("Preencha todos os campos");
       }
 
-      const telefone = formatarNumero(telefone_input);
+      botao.disabled = true;
+      botao.innerText = "Ativando...";
 
       try {
+
+        const telefone = formatarNumero(telefone_input);
+
         const { error } = await supabaseClient
           .from("pets")
           .update({
@@ -173,6 +200,9 @@
       } catch (err) {
         console.error(err);
         atualizarStatus("❌ Erro ao ativar");
+
+        botao.disabled = false;
+        botao.innerText = "Ativar TAG";
       }
     }
 
