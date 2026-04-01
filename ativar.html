@@ -142,8 +142,7 @@ inputTel.addEventListener("input", function(e) {
   if (v.length > 11) v = v.slice(0,11);
 
   if (v.length > 2) {
-  //  v = "(" + v.slice(0,2) + ") " + v.slice(2);
-    v = v.slice(2);
+  v = "(" + v.slice(0,2) + ") " + v.slice(2);
   }
 
   if (v.length > 10) {
@@ -161,7 +160,7 @@ function formatarTelefone(numero) {
 
   // adiciona código do Brasil
   if (!numero.startsWith("55")) {
-    numero = "55" + numero;
+    numero = "" + numero;
   }
 
   const regex = /^55\d{2}9\d{8}$/;
