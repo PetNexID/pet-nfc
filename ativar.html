@@ -40,7 +40,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    // 🔥 CONFIGURAÇÃO CORRETA
+    // 🔥 CONFIGURAÇÃO
     const SUPABASE_URL = "https://wbinbiqurgbqfimjuyvh.supabase.co";
     const SUPABASE_KEY = "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF";
 
@@ -60,7 +60,7 @@
         const { data, error } = await supabaseClient
           .from("pets")
           .select("*")
-          .eq("codigo", codigo)
+          .eq("codigo_tag", codigo)
           .limit(1);
 
         console.log("DATA:", data);
@@ -68,13 +68,15 @@
 
         if (error) throw error;
 
+        // TAG NÃO EXISTE
         if (!data || data.length === 0) {
           return mostrarErro("❌ TAG não encontrada");
         }
 
         const pet = data[0];
 
-        if (pet.status === "ATIVA") {
+        // 🔥 LÓGICA CORRETA (BASEADA NO SEU BANCO)
+        if (pet.ativo === true) {
           atualizarStatus("🔎 TAG ativa encontrada...");
           setTimeout(() => {
             window.location.href = `/pet.html?codigo=${codigo}`;
