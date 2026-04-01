@@ -18,14 +18,28 @@
       background: #2e5561;
       padding: 30px;
       border-radius: 12px;
+      max-width: 400px;
+      margin: auto;
     }
 
-    h1 {
-      margin-bottom: 10px;
+    input {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
     }
 
-    p {
-      font-size: 18px;
+    button {
+      padding: 12px;
+      background: #00c853;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      width: 100%;
+      font-size: 16px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -34,27 +48,29 @@
   <div class="box">
     <h1>🐶 Ativação da TAG</h1>
     <p id="status">Verificando TAG...</p>
+
+    <div id="form" style="display:none;">
+      <input type="text" id="nome_pet" placeholder="Nome do Pet">
+      <input type="text" id="nome_tutor" placeholder="Seu nome">
+      <input type="text" id="telefone" placeholder="Telefone">
+
+      <button onclick="ativar()">Ativar TAG</button>
+    </div>
   </div>
 
-  <!-- Supabase Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    // 🔥 CONFIGURAÇÃO
     const SUPABASE_URL = "https://wbinbiqurgbqfimjuyvh.supabase.co";
     const SUPABASE_KEY = "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF";
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    const params = new URLSearchParams(window.location.search);
+    const codigo = params.get("codigo");
+
     async function verificarTag() {
-      const params = new URLSearchParams(window.location.search);
-      const codigo = params.get("codigo");
-
-      console.log("CODIGO:", codigo);
-
-      if (!codigo) {
-        return mostrarErro("Código inválido");
-      }
+      if (!codigo) return mostrarErro("Código inválido");
 
       try {
         const { data, error } = await supabaseClient
@@ -63,34 +79,61 @@
           .eq("codigo_tag", codigo)
           .limit(1);
 
-        console.log("DATA:", data);
-        console.log("ERROR:", error);
-
         if (error) throw error;
 
-        // TAG NÃO EXISTE
         if (!data || data.length === 0) {
           return mostrarErro("❌ TAG não encontrada");
         }
 
         const pet = data[0];
 
-        // 🔥 LÓGICA CORRETA (BASEADA NO SEU BANCO)
         if (pet.ativo === true) {
-          atualizarStatus("🔎 TAG ativa encontrada...");
+          atualizarStatus("🔎 TAG já ativa!");
           setTimeout(() => {
             window.location.href = `/pet.html?codigo=${codigo}`;
           }, 1000);
         } else {
-          atualizarStatus("⚙️ TAG disponível para ativação...");
-          setTimeout(() => {
-            window.location.href = `/ativar-form.html?codigo=${codigo}`;
-          }, 1000);
+          atualizarStatus("⚙️ Preencha para ativar");
+          document.getElementById("form").style.display = "block";
         }
 
       } catch (err) {
-        console.error("ERRO:", err);
+        console.error(err);
         mostrarErro("⚠️ Erro ao verificar TAG");
+      }
+    }
+
+    async function ativar() {
+      const nome_pet = document.getElementById("nome_pet").value;
+      const nome_tutor = document.getElementById("nome_tutor").value;
+      const telefone = document.getElementById("telefone").value;
+
+      if (!nome_pet || !nome_tutor) {
+        return atualizarStatus("Preencha os campos");
+      }
+
+      try {
+        const { error } = await supabaseClient
+          .from("pets")
+          .update({
+            nome_pet,
+            nome_tutor,
+            telefone,
+            ativo: true
+          })
+          .eq("codigo_tag", codigo);
+
+        if (error) throw error;
+
+        atualizarStatus("✅ TAG ativada com sucesso!");
+
+        setTimeout(() => {
+          window.location.href = `/pet.html?codigo=${codigo}`;
+        }, 1500);
+
+      } catch (err) {
+        console.error(err);
+        atualizarStatus("❌ Erro ao ativar");
       }
     }
 
