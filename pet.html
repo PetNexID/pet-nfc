@@ -91,7 +91,7 @@ Tutor: <span id="tutor">---</span>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 const urlParams = new URLSearchParams(window.location.search);
@@ -119,8 +119,8 @@ async function carregar() {
     return;
   }
 
-  // 🔴 NÃO ATIVADA
-  if (data.status !== "USADA") {
+  // 🔴 NÃO ATIVADA (CORREÇÃO AQUI)
+  if (data.ativo !== true) {
 
     document.getElementById("nome").innerText = "TAG NÃO ATIVADA";
     document.getElementById("tutor").innerText = "-";
@@ -141,7 +141,7 @@ async function carregar() {
   telefoneGlobal = data.telefone;
 
   document.getElementById("ligar").href =
-    "tel:+55" + telefoneGlobal;
+    "tel:+" + telefoneGlobal;
 }
 
 
@@ -165,18 +165,17 @@ document.getElementById("whatsapp").addEventListener("click", function() {
         + lat + "," + lng
       );
 
-      const url = "https://wa.me/55" + telefoneGlobal + "?text=" + mensagem;
+      const url = "https://wa.me/" + telefoneGlobal + "?text=" + mensagem;
 
       window.open(url, "_blank");
 
     }, function() {
 
-      // fallback
       const mensagem = encodeURIComponent(
         "📍 Encontrei seu pet! Entre em contato comigo."
       );
 
-      const url = "https://wa.me/55" + telefoneGlobal + "?text=" + mensagem;
+      const url = "https://wa.me/" + telefoneGlobal + "?text=" + mensagem;
 
       window.open(url, "_blank");
 
