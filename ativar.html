@@ -22,10 +22,18 @@
       margin: auto;
     }
 
+    label {
+      display: block;
+      text-align: left;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #cfd8dc;
+    }
+
     input {
       display: block;
       width: 100%;
-      margin: 10px 0;
+      margin: 5px 0 10px;
       padding: 10px;
       border-radius: 5px;
       border: none;
@@ -50,9 +58,15 @@
     <p id="status">Verificando TAG...</p>
 
     <div id="form" style="display:none;">
-      <input type="text" id="nome_pet" placeholder="Nome do Pet">
-      <input type="text" id="nome_tutor" placeholder="Seu nome">
-      <input type="text" id="telefone" placeholder="Telefone">
+      
+      <label>Nome do Pet</label>
+      <input type="text" id="nome_pet" placeholder="Ex: Rex">
+
+      <label>Nome do Tutor</label>
+      <input type="text" id="nome_tutor" placeholder="Ex: João Silva">
+
+      <label>WhatsApp para contato</label>
+      <input type="text" id="telefone" placeholder="(85) 99999-9999" oninput="mascaraTelefone(this)">
 
       <button onclick="ativar()">Ativar TAG</button>
     </div>
@@ -93,7 +107,7 @@
             window.location.href = `/pet.html?codigo=${codigo}`;
           }, 1000);
         } else {
-          atualizarStatus("⚙️ Preencha para ativar");
+          atualizarStatus("⚙️ Preencha os dados para ativar");
           document.getElementById("form").style.display = "block";
         }
 
@@ -103,14 +117,39 @@
       }
     }
 
+    // 🔥 MÁSCARA DE TELEFONE
+    function mascaraTelefone(input) {
+      let v = input.value.replace(/\D/g, "");
+
+      if (v.length > 11) v = v.slice(0, 11);
+
+      if (v.length > 10) {
+        input.value = v.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+      } else if (v.length > 6) {
+        input.value = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, "($1) $2-$3");
+      } else if (v.length > 2) {
+        input.value = v.replace(/^(\d{2})(\d{0,5})$/, "($1) $2");
+      } else {
+        input.value = v;
+      }
+    }
+
+    // 🔥 CONVERTE PARA PADRÃO 5585999999999
+    function formatarNumero(numero) {
+      let v = numero.replace(/\D/g, "");
+      return "55" + v;
+    }
+
     async function ativar() {
       const nome_pet = document.getElementById("nome_pet").value;
       const nome_tutor = document.getElementById("nome_tutor").value;
-      const telefone = document.getElementById("telefone").value;
+      const telefone_input = document.getElementById("telefone").value;
 
-      if (!nome_pet || !nome_tutor) {
-        return atualizarStatus("Preencha os campos");
+      if (!nome_pet || !nome_tutor || !telefone_input) {
+        return atualizarStatus("Preencha todos os campos");
       }
+
+      const telefone = formatarNumero(telefone_input);
 
       try {
         const { error } = await supabaseClient
