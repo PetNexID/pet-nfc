@@ -1,256 +1,110 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ativação da TAG</title>
+  <meta charset="UTF-8">
+  <title>Ativação da TAG</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  color: white;
-  text-align: center;
-}
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1f3a44;
+      color: #fff;
+      text-align: center;
+      padding: 40px;
+    }
 
-.card {
-  max-width: 400px;
-  margin: 60px auto;
-  padding: 25px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.05);
-}
+    .box {
+      background: #2e5561;
+      padding: 30px;
+      border-radius: 12px;
+    }
 
-.logo {
-  width: 200px;
-}
+    h1 {
+      margin-bottom: 10px;
+    }
 
-label {
-  display: block;
-  text-align: left;
-  width: 90%;
-  margin: 10px auto 5px;
-  font-size: 13px;
-  opacity: 0.8;
-}
-
-input {
-  width: 90%;
-  margin: 5px auto 10px;
-  padding: 14px;
-  border-radius: 10px;
-  border: none;
-  display: block;
-}
-
-button {
-  width: 90%;
-  padding: 14px;
-  border-radius: 10px;
-  background: linear-gradient(90deg,#00c6ff,#0072ff);
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-.msg {
-  margin: 15px;
-  padding: 12px;
-  border-radius: 10px;
-  font-weight: bold;
-}
-
-.erro { background: #ff2e2e; }
-.sucesso { background: #00c851; }
-</style>
+    p {
+      font-size: 18px;
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="card">
+  <div class="box">
+    <h1>🐶 Ativação da TAG</h1>
+    <p id="status">Verificando TAG...</p>
+  </div>
 
-<img src="Logo.png" class="logo">
+  <script>
+    const SUPABASE_URL = "https://SEU-PROJETO.supabase.co";
+    const SUPABASE_KEY = "SUA_ANON_KEY";
 
-<h2>🐶 Ativação da TAG 🐶</h2>
+    async function verificarTag() {
+      const params = new URLSearchParams(window.location.search);
+      const codigo = params.get("codigo");
 
-<div id="mensagem">Verificando TAG...</div>
+      if (!codigo) {
+        return mostrarErro("Código inválido");
+      }
 
-<div id="formulario" style="display:none;">
+      try {
+        const response = await fetch(
+          `${SUPABASE_URL}/rest/v1/pets?codigo=eq.${codigo}&limit=1`,
+          {
+            method: "GET",
+            headers: {
+              "apikey": SUPABASE_KEY,
+              "Authorization": `Bearer ${SUPABASE_KEY}`,
+              "Content-Type": "application/json"
+            }
+          }
+        );
 
-  <label>Nome do Pet</label>
-  <input id="pet" placeholder="Ex: Rex">
+        if (!response.ok) {
+          throw new Error("Erro na API");
+        }
 
-  <label>Nome do Tutor</label>
-  <input id="tutor" placeholder="Ex: João Silva">
+        const data = await response.json();
 
-  <label>WhatsApp</label>
-  <input id="telefone" placeholder="(85) 99999-9999">
+        console.log("RESPOSTA:", data);
 
-  <button onclick="ativar()">Ativar TAG</button>
+        // 🔥 CORREÇÃO PRINCIPAL: evita travamento
+        if (!data || data.length === 0) {
+          return mostrarErro("❌ TAG não encontrada");
+        }
 
-</div>
+        const pet = data[0];
 
-</div>
+        // 🔥 mantém sua lógica original
+        if (pet.status === "ATIVA") {
+          atualizarStatus("🔎 TAG ativa encontrada...");
+          setTimeout(() => {
+            window.location.href = `/pet.html?codigo=${codigo}`;
+          }, 1000);
+        } else {
+          atualizarStatus("⚙️ TAG disponível para ativação...");
+          setTimeout(() => {
+            window.location.href = `/ativar-form.html?codigo=${codigo}`;
+          }, 1000);
+        }
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+      } catch (error) {
+        console.error("ERRO:", error);
+        mostrarErro("⚠️ Erro ao verificar TAG");
+      }
+    }
 
-<script>
-const urlParams = new URLSearchParams(window.location.search);
-const codigo = urlParams.get('codigo');
+    function atualizarStatus(msg) {
+      document.getElementById("status").innerText = msg;
+    }
 
-const supabaseClient = supabase.createClient(
-  "https://wbinbiqurgbqfimjuyvh.supabase.co",
-  "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF"
-);
+    function mostrarErro(msg) {
+      document.getElementById("status").innerText = msg;
+    }
 
-
-// 🔎 VERIFICAR STATUS
-async function verificar() {
-
-  const { data, error } = await supabaseClient
-    .from('pets')
-    .select('*')
-    .eq('codigo_tag', codigo)
-    .single();
-
-  if (error) {
-    console.error(error);
-    mostrarErro("Erro ao consultar TAG");
-    return;
-  }
-
-  if (data.status === "USADA") {
-    mostrarErro("⚠️ TAG JÁ CADASTRADA");
-    return;
-  }
-
-  document.getElementById("mensagem").innerHTML =
-    "<div class='msg'>Preencha os dados para ativar</div>";
-
-  document.getElementById("formulario").style.display = "block";
-}
-
-
-// 🔥 MÁSCARA WHATSAPP
-const inputTel = document.getElementById("telefone");
-
-inputTel.addEventListener("input", function(e) {
-
-  let v = e.target.value.replace(/\D/g, "");
-
-  if (v.length > 11) v = v.slice(0,11);
-
-  if (v.length > 2) {
-    v = "(" + v.slice(0,2) + ") " + v.slice(2);
-  }
-
-  if (v.length > 10) {
-    v = v.slice(0,10) + "-" + v.slice(10);
-  }
-
-  e.target.value = v;
-});
-
-
-// 🔥 VALIDAÇÃO + NORMALIZAÇÃO
-function formatarTelefone(numero) {
-
-  numero = numero.replace(/\D/g, "");
-
-  // adiciona código do Brasil
-  //if (!numero.startsWith("55")) {
-  //  numero = "55" + numero;
- // }
-
- // const regex = /^55\d{2}9\d{8}$/;
-
- // if (!regex.test(numero)) return false;
-
-  //return numero;
-//}
-  function formatarTelefone(numero) {
-
-  // remove tudo que não for número
-  numero = numero.replace(/\D/g, "");
-
-  // remove qualquer 55 duplicado no início
-  numero = numero.replace(/^55+/, "");
-
-  // agora adiciona 55 corretamente
-  numero = "55" + numero;
-
-  // valida padrão BR
-  const regex = /^55\d{2}9\d{8}$/;
-
-  if (!regex.test(numero)) return false;
-
-  return numero;
-}
-
-
-// 🚀 ATIVAR
-async function ativar() {
-
-  const nomePet = document.getElementById("pet").value;
-  const nomeTutor = document.getElementById("tutor").value;
-  let telefone = document.getElementById("telefone").value;
-
-  if (!nomePet || !nomeTutor || !telefone) {
-    alert("Preencha todos os campos");
-    return;
-  }
-
-  telefone = formatarTelefone(telefone);
-
-  if (!telefone) {
-    alert("Digite um WhatsApp válido com DDD (ex: 85999999999)");
-    return;
-  }
-
-  const { data, error } = await supabaseClient
-    .from('pets')
-    .update({
-      nome_pet: nomePet,
-      nome_tutor: nomeTutor,
-      telefone: telefone,
-      status: "USADA",
-      data_cadastro: new Date()
-    })
-    .eq('codigo_tag', codigo)
-    .select();
-
-  if (error) {
-    console.error(error);
-    mostrarErro("Erro ao salvar no banco");
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    mostrarErro("⚠️ Falha ao atualizar TAG");
-    return;
-  }
-
-  mostrarSucesso("✅ TAG CADASTRADA COM SUCESSO");
-
-  document.getElementById("formulario").style.display = "none";
-}
-
-
-// UI
-function mostrarErro(msg) {
-  document.getElementById("mensagem").innerHTML =
-    "<div class='msg erro'>" + msg + "</div>";
-}
-
-function mostrarSucesso(msg) {
-  document.getElementById("mensagem").innerHTML =
-    "<div class='msg sucesso'>" + msg + "</div>";
-}
-
-
-verificar();
-</script>
+    verificarTag();
+  </script>
 
 </body>
 </html>
