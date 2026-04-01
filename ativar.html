@@ -36,55 +36,44 @@
     <p id="status">Verificando TAG...</p>
   </div>
 
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
+    // 🔥 CONFIGURAÇÃO CORRETA
     const SUPABASE_URL = "https://wbinbiqurgbqfimjuyvh.supabase.co";
     const SUPABASE_KEY = "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF";
-    
 
-    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     async function verificarTag() {
       const params = new URLSearchParams(window.location.search);
       const codigo = params.get("codigo");
 
-       // 👇 COLOCA AQUI
-    console.log("KEY:", SUPABASE_KEY);
-    console.log("URL:", SUPABASE_URL);
+      console.log("CODIGO:", codigo);
 
       if (!codigo) {
         return mostrarErro("Código inválido");
       }
 
       try {
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/pets?codigo=eq.${codigo}&limit=1`,
-          {
-            method: "GET",
-            headers: {
-              "apikey": SUPABASE_KEY,
-              "Content-Type": "application/json"
-            }
-          }
-        );
+        const { data, error } = await supabaseClient
+          .from("pets")
+          .select("*")
+          .eq("codigo", codigo)
+          .limit(1);
 
-        console.log("STATUS:", response.status);
+        console.log("DATA:", data);
+        console.log("ERROR:", error);
 
-        if (!response.ok) {
-          const erroTexto = await response.text();
-          console.error("ERRO API:", erroTexto);
-          throw new Error("Erro na API");
-        }
+        if (error) throw error;
 
-        const data = await response.json();
-        console.log("RESPOSTA:", data);
-
-        // 🔥 NÃO TRAVA MAIS
         if (!data || data.length === 0) {
           return mostrarErro("❌ TAG não encontrada");
         }
 
         const pet = data[0];
 
-        // 🔥 SUA LÓGICA MANTIDA
         if (pet.status === "ATIVA") {
           atualizarStatus("🔎 TAG ativa encontrada...");
           setTimeout(() => {
@@ -97,8 +86,8 @@
           }, 1000);
         }
 
-      } catch (error) {
-        console.error("ERRO GERAL:", error);
+      } catch (err) {
+        console.error("ERRO:", err);
         mostrarErro("⚠️ Erro ao verificar TAG");
       }
     }
