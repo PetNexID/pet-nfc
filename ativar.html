@@ -160,7 +160,7 @@ function formatarTelefone(numero) {
 
   // adiciona código do Brasil
   if (!numero.startsWith("55")) {
-    numero = "" + numero;
+    numero = "55" + numero;
   }
 
   const regex = /^55\d{2}9\d{8}$/;
