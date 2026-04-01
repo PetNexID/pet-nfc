@@ -1,11 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-  <title>Painel Admin</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<title>Painel Admin</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=SUA_KEY_AQUI"></script>
+
+<style>
+body {
+  font-family: Arial;
+  background: #0f2027;
+  color: #fff;
+  padding: 20px;
+}
+
+.box {
+  background: #203a43;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 10px;
+}
+</style>
 </head>
 
-<body style="font-family:Arial; background:#0f2027; color:#fff; padding:20px;">
+<body>
+
+<script>
+// 🔐 LOGIN SIMPLES
+const senha = prompt("Digite a senha:");
+
+if (senha !== "123456") {
+  alert("Acesso negado");
+  window.location.href = "/";
+}
+</script>
 
 <h2>📊 Painel de Ativações</h2>
 
@@ -17,18 +47,28 @@
 <input type="date" id="fim">
 
 <button onclick="carregar()">Filtrar</button>
+<button onclick="exportar()">📥 Exportar Excel</button>
 
 <hr>
 
-<!-- KPIs -->
 <h3>Total de Ativações: <span id="total"></span></h3>
 
 <canvas id="grafico"></canvas>
 
 <hr>
 
+<h3>🏆 Ranking de Tutores</h3>
+<div id="ranking"></div>
+
+<hr>
+
 <h3>📋 Lista de Ativações</h3>
 <div id="lista"></div>
+
+<hr>
+
+<h3>🗺️ Mapa</h3>
+<div id="map" style="height:400px;"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -38,6 +78,9 @@ const supabaseClient = supabase.createClient(
   "sb_publishable_xlRH0L3lgXvrOPNBqRmOiw_1y9EVonF"
 );
 
+let chart;
+
+// 🚀 CARREGAR DADOS
 async function carregar() {
 
   let query = supabaseClient
@@ -48,29 +91,26 @@ async function carregar() {
   const inicio = document.getElementById("inicio").value;
   const fim = document.getElementById("fim").value;
 
-  if (inicio) {
-    query = query.gte("data_ativacao", inicio);
-  }
-
-  if (fim) {
-    query = query.lte("data_ativacao", fim + "T23:59:59");
-  }
+  if (inicio) query = query.gte("data_ativacao", inicio);
+  if (fim) query = query.lte("data_ativacao", fim + "T23:59:59");
 
   const { data } = await query;
 
-  // 🔢 TOTAL
+  window.dados = data;
+
+  // TOTAL
   document.getElementById("total").innerText = data.length;
 
-  // 📊 AGRUPAR POR DIA
+  // 📊 AGRUPAR
   const grupo = {};
-
   data.forEach(p => {
     const dia = new Date(p.data_ativacao).toLocaleDateString();
     grupo[dia] = (grupo[dia] || 0) + 1;
   });
 
-  // 📊 GRÁFICO
-  new Chart(document.getElementById("grafico"), {
+  if (chart) chart.destroy();
+
+  chart = new Chart(document.getElementById("grafico"), {
     type: "bar",
     data: {
       labels: Object.keys(grupo),
@@ -81,12 +121,28 @@ async function carregar() {
     }
   });
 
+  // 🏆 RANKING
+  const ranking = {};
+  data.forEach(p => {
+    if (!p.nome_tutor) return;
+    ranking[p.nome_tutor] = (ranking[p.nome_tutor] || 0) + 1;
+  });
+
+  let htmlRank = "";
+  Object.entries(ranking)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .forEach(([nome, total]) => {
+      htmlRank += `<div class="box">👤 ${nome} - ${total} ativações</div>`;
+    });
+
+  document.getElementById("ranking").innerHTML = htmlRank;
+
   // 📋 LISTA
   let html = "";
-
   data.forEach(p => {
     html += `
-      <div style="background:#203a43; margin:10px; padding:10px;">
+      <div class="box">
         🐶 ${p.nome_pet || "-"} <br>
         👤 ${p.nome_tutor || "-"} <br>
         📞 ${p.telefone || "-"} <br>
@@ -96,6 +152,54 @@ async function carregar() {
   });
 
   document.getElementById("lista").innerHTML = html;
+
+  carregarMapa();
+}
+
+
+// 📥 EXPORTAR
+function exportar() {
+
+  if (!window.dados) return alert("Sem dados");
+
+  const dadosFormatados = window.dados.map(p => ({
+    Pet: p.nome_pet,
+    Tutor: p.nome_tutor,
+    Telefone: p.telefone,
+    Data: new Date(p.data_ativacao).toLocaleString()
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(dadosFormatados);
+  const wb = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(wb, ws, "Ativacoes");
+  XLSX.writeFile(wb, "ativacoes.xlsx");
+}
+
+
+// 🗺️ MAPA
+async function carregarMapa() {
+
+  const { data } = await supabaseClient
+    .from("scans")
+    .select("*");
+
+  const map = new google.maps.Map(document.getElementById("map"), {
+    zoom: 4,
+    center: { lat: -14, lng: -52 }
+  });
+
+  data.forEach(s => {
+    if (s.latitude) {
+      new google.maps.Marker({
+        position: {
+          lat: parseFloat(s.latitude),
+          lng: parseFloat(s.longitude)
+        },
+        map
+      });
+    }
+  });
 }
 
 carregar();
